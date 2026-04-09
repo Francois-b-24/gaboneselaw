@@ -2,13 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
-# Force pure-Python protobuf parser. Required on Streamlit Cloud where the
-# resolved combination of protobuf + opentelemetry-proto stubs (pulled in by
-# chromadb) is incompatible with the C++ descriptor API and crashes at import.
-os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
-
 from pathlib import Path
 
 import streamlit as st
