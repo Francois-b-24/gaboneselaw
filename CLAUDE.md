@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Agent **"Info Juridique Citoyenne"** — a Streamlit app that vulgarizes Gabonese law (labor, land, family) for citizens. RAG pipeline over a markdown legal corpus, Mistral via Groq for generation. Primary working language of the project and its users is **French**.
+Agent **"Info Juridique Citoyenne"** — a Streamlit app that vulgarizes Gabonese law (labor, land, family) for citizens. **Agentic RAG with tool use** over a markdown legal corpus, LLM via Groq for generation. Primary working language of the project and its users is **French**.
 
 ## Commands
 
@@ -29,21 +29,34 @@ LegalRetriever().search("licenciement abusif", domaine="travail", k=3)
 
 ## Architecture
 
-Three-layer pipeline: **RAG retrieval → prompt assembly → Groq streaming**, wired together in `src/agent/agent.py` (`LegalAgent.answer`) and consumed by `app.py`.
+**Agentic tool-use loop**: the LLM decides which tools to call, executes them, and loops until it produces a text answer. Wired together in `src/agent/agent.py` (`LegalAgent.answer`) and consumed by `app.py`.
+
+### Agent tools (`src/agent/tools.py`)
+
+| Tool | Purpose | Implementation |
+|------|---------|----------------|
+| `recherche_juridique` | Semantic search in the legal corpus | `LegalRetriever.search()` |
+| `lire_article` | Read a specific article by number | `LegalRetriever.get_article()` |
+| `calculer_indemnite` | Compute severance/notice (Art. 72 & 75) | `src/agent/calculator.py` |
+
+Tool definitions live in `src/agent/tools.py` (OpenAI/Groq JSON schemas). Execution dispatch is in `src/agent/tool_executor.py`. Adding a new tool means: (1) add schema to `tools.py`, (2) add execution branch to `tool_executor.py`, (3) mention it in the system prompt.
 
 ### Data flow (one user question)
 
 1. **`app.py`** captures the question + selected `domaine` filter + full chat history from `st.session_state.messages`.
-2. **`LegalAgent.answer`** (`src/agent/agent.py`) calls the retriever, then builds the OpenAI-format message list: `[system_prompt, *history, user_message_with_context]`.
-3. **`LegalRetriever.search`** (`src/rag/retriever.py`) queries the persistent Chroma collection with an optional `where={"domaine": ...}` filter. Returns `LegalChunk` dataclasses (text + metadata + cosine-based score).
-4. **`build_user_message`** (`src/agent/prompts.py`) injects the retrieved extracts into the user turn so citations stay grounded.
-5. **`GroqLLM.stream`** (`src/agent/llm.py`) streams tokens; `app.py` renders them with `st.write_stream` and appends the sources expander.
+2. **`LegalAgent.answer`** (`src/agent/agent.py`) builds the message list `[system_prompt, *history, user_question]` and enters the **agent loop**.
+3. **Agent loop** (`_agent_loop`): calls `GroqLLM.stream_with_tools()` with `tools=ALL_TOOLS`. Inspects the stream:
+   - If `delta.tool_calls` → accumulates JSON args, executes tools via `tool_executor.execute_tool()`, appends results as `role: tool` messages, loops back.
+   - If `delta.content` → yields tokens to `app.py` (streaming), loop ends.
+   - Max `MAX_AGENT_ITERATIONS` rounds (default 5).
+4. **`AgentResponse`** (`src/agent/response.py`) wraps the generator — iterable for `st.write_stream`, collects sources in `.sources`.
+5. **`app.py`** renders tokens with `st.write_stream(response)` and displays `response.sources` in the expander.
 
 ### Key design points (don't break these)
 
 - **e5 embedding prefixes are load-bearing.** `intfloat/multilingual-e5-base` requires `passage: ` at indexing time and `query: ` at search time. `E5EmbeddingFunction` (passed to Chroma) uses `passage:`; `embed_query()` is called explicitly in `LegalRetriever.search` to apply `query:`. Do **not** route queries through the Chroma embedding function — that would prefix them with `passage:` and silently degrade retrieval.
 
-- **Groq model fallback.** `GROQ_MODEL` (default `mistral-saba-24b`) can disappear from Groq's catalog. `GroqLLM.stream` catches the first failure and retries once with `GROQ_MODEL_FALLBACK` (`llama-3.1-8b-instant`). Keep this fallback path intact.
+- **Groq model fallback.** `GROQ_MODEL` (default `llama-3.3-70b-versatile`) can disappear from Groq's catalog. `GroqLLM.stream_with_tools` catches the first failure and retries once with `GROQ_MODEL_FALLBACK` (`llama-3.1-8b-instant`). Keep this fallback path intact.
 
 - **Domain filter is metadata-based.** Each chunk is tagged with `domaine` (`travail` / `foncier` / `famille`) during ingestion. The sidebar radio in `app.py` maps user-friendly labels to these keys via `DOMAINE_CHOICES`. Adding a new domain means: (1) new `.md` file in `data/legal_corpus/`, (2) new entry in `DOMAINES` in `src/config.py`, (3) re-run `ingest`.
 
@@ -55,7 +68,7 @@ Three-layer pipeline: **RAG retrieval → prompt assembly → Groq streaming**, 
 
 ### Config
 
-All tunables live in `src/config.py` (env loaded from `.env` via `python-dotenv`): Groq model + fallback, embedding model, Chroma path/collection name, `TOP_K`, `CHUNK_MAX_CHARS`, and the `DOMAINES` registry. Prefer editing this file over scattering constants.
+All tunables live in `src/config.py` (env loaded from `.env` via `python-dotenv`): Groq model + fallback, embedding model, Chroma path/collection name, `TOP_K`, `CHUNK_MAX_CHARS`, `MAX_AGENT_ITERATIONS`, and the `DOMAINES` registry. Prefer editing this file over scattering constants.
 
 ## Corpus caveat
 

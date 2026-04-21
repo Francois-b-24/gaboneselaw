@@ -328,23 +328,23 @@ if user_question:
     # Réponse de l'agent
     with st.chat_message("assistant"):
         try:
-            stream, sources = agent.answer(
+            response = agent.answer(
                 question=user_question,
                 domaine=selected_domaine,
                 history=history_for_llm,
             )
-            full_response = st.write_stream(stream)
-            render_sources(sources)
+            full_response = st.write_stream(response)
+            render_sources(response.sources)
         except Exception as exc:  # noqa: BLE001
             st.error(f"Erreur lors de la génération de la réponse : {exc}")
             full_response = ""
-            sources = []
+            response = None
 
     if full_response:
         st.session_state.messages.append(
             {
                 "role": "assistant",
                 "content": full_response,
-                "sources": sources,
+                "sources": response.sources if response else [],
             }
         )

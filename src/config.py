@@ -20,7 +20,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY")
 # Modèle principal Mistral sur Groq. La liste des modèles Groq évolue — en
 # cas d'erreur 404/modèle indisponible au runtime, on bascule sur le fallback.
-GROQ_MODEL: str = os.getenv("GROQ_MODEL", "mistral-saba-24b")
+GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_MODEL_FALLBACK: str = "llama-3.1-8b-instant"
 
 # --- Embeddings ---
@@ -36,6 +36,7 @@ CORPUS_DIR: Path = PROJECT_ROOT / "data" / "legal_corpus"
 # --- RAG ---
 TOP_K: int = 5
 CHUNK_MAX_CHARS: int = 1200  # taille max d'un chunk avant re-split
+MAX_AGENT_ITERATIONS: int = 5  # nombre max de tours outil dans la boucle agent
 
 # Mapping nom de fichier (sans extension) -> (libellé domaine, source humaine)
 DOMAINES: dict[str, dict[str, str]] = {

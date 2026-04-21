@@ -25,6 +25,57 @@ class GroqLLM:
     def current_model(self) -> str:
         return self._model
 
+    def stream_with_tools(
+        self,
+        messages: list[dict],
+        tools: list[dict],
+        temperature: float = 0.2,
+        max_tokens: int = 1024,
+    ) -> Iterator:
+        """Stream la réponse du LLM avec tool use activé.
+
+        Retourne les objets ChatCompletionChunk bruts (pas juste le content)
+        pour permettre à la boucle agent de détecter les tool_calls.
+        """
+        try:
+            yield from self._stream_raw(
+                self._model, messages, tools, temperature, max_tokens
+            )
+        except Exception as exc:  # noqa: BLE001
+            if self._fallback_used or self._model == GROQ_MODEL_FALLBACK:
+                raise
+            print(
+                f"[warn] Modèle '{self._model}' indisponible ({exc}). "
+                f"Bascule sur '{GROQ_MODEL_FALLBACK}'."
+            )
+            self._model = GROQ_MODEL_FALLBACK
+            self._fallback_used = True
+            yield from self._stream_raw(
+                self._model, messages, tools, temperature, max_tokens
+            )
+
+    def _stream_raw(
+        self,
+        model: str,
+        messages: list[dict],
+        tools: list[dict],
+        temperature: float,
+        max_tokens: int,
+    ) -> Iterator:
+        """Appel Groq streaming brut avec outils."""
+        kwargs: dict = dict(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+        completion = self._client.chat.completions.create(**kwargs)
+        yield from completion
+
     def stream(
         self,
         messages: list[dict[str, str]],
