@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import html
+import re
 import tempfile
 from pathlib import Path
 
@@ -29,10 +31,10 @@ DOMAINE_CHOICES = {"Tous les domaines": None} | {
 }
 
 SAMPLE_QUESTIONS = [
-    "Quelle est la durée du préavis après 6 ans d'ancienneté ?",
-    "Comment obtenir un titre foncier au Gabon ?",
-    "Quelles sont les conditions du divorce par consentement mutuel ?",
-    "Calcule mon indemnité pour 8 ans et 450 000 FCFA par mois",
+    "Quelle est la durée du préavis de licenciement selon mon ancienneté ?",
+    "Comment sont calculées les indemnités de licenciement ?",
+    "Quelles sont les règles sur les heures supplémentaires et leur majoration ?",
+    "Calcule mon indemnité pour 8 ans d'ancienneté et 450 000 FCFA par mois",
 ]
 
 # --- CSS personnalisé (rendu institutionnel + responsive mobile) ---
@@ -240,6 +242,52 @@ st.markdown(
         border-right: 1px solid #e5e7eb;
     }
 
+    /* Rendu prose des réponses — cache le markdown brut, présente du texte propre */
+    .prose {
+        color: #1a2332;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+    .prose p {
+        margin: 0 0 0.7rem 0;
+    }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose strong {
+        color: #1a2332;
+        font-weight: 600;
+    }
+    .prose ul {
+        margin: 0.3rem 0 0.8rem 0;
+        padding-left: 1.3rem;
+    }
+    .prose li {
+        margin-bottom: 0.35rem;
+        line-height: 1.65;
+    }
+    .prose .cite {
+        display: inline-block;
+        background: #eef2f7;
+        border: 1px solid #d6dfeb;
+        color: #2c4a6e;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        margin: 0 2px;
+        white-space: nowrap;
+    }
+    .prose .disclaimer-inline {
+        display: block;
+        margin-top: 0.9rem;
+        padding: 0.65rem 0.85rem;
+        background: #fff8e1;
+        border-left: 3px solid #d97706;
+        border-radius: 0 6px 6px 0;
+        font-size: 0.88rem;
+        color: #3f2d0a;
+        font-style: italic;
+    }
+
     /* Empty state — landing */
     .sample-label {
         font-size: 0.78rem;
@@ -320,6 +368,94 @@ def _source_badge(c: LegalChunk) -> str:
     if stype == "pdf":
         return '<span class="source-badge badge-pdf">PDF</span>'
     return ""
+
+
+def md_to_prose_html(text: str) -> str:
+    """Convertit la réponse du LLM (markdown léger) en HTML propre et stylé.
+
+    Échappe d'abord le texte, puis ré-injecte : gras **...**, listes `- `,
+    paragraphes, citations `[Source : <code>, <article>]` en pill, et un
+    bloc final dédié pour l'avertissement « ⚠️ *...* ».
+    """
+    if not text:
+        return ""
+
+    # Extraire l'avertissement final pour le rendre en bloc dédié
+    disclaimer = ""
+    m = re.search(
+        r"⚠️\s*\*([^*]+?)\*\s*$",
+        text.strip(),
+        flags=re.MULTILINE,
+    )
+    if m:
+        disclaimer = m.group(1).strip()
+        text = text[: m.start()].rstrip()
+
+    # Échappement HTML de base
+    esc = html.escape(text)
+
+    # Citations [Source : ...] → pill
+    esc = re.sub(
+        r"\[Source\s*:\s*([^\]]+)\]",
+        r'<span class="cite">\1</span>',
+        esc,
+    )
+
+    # Gras **...**
+    esc = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", esc)
+
+    # Italique *...* (précaution : éviter de manger les ** déjà traités — ils sont remplacés)
+    esc = re.sub(r"(?<!\w)\*([^*\n]+?)\*(?!\w)", r"<em>\1</em>", esc)
+
+    # Découpage en blocs (paragraphes / listes)
+    lines = esc.split("\n")
+    out: list[str] = []
+    buf: list[str] = []
+    in_list = False
+
+    def flush_para():
+        nonlocal buf
+        if buf:
+            out.append("<p>" + " ".join(buf).strip() + "</p>")
+            buf = []
+
+    def flush_list_open():
+        nonlocal in_list
+        if not in_list:
+            out.append("<ul>")
+            in_list = True
+
+    def flush_list_close():
+        nonlocal in_list
+        if in_list:
+            out.append("</ul>")
+            in_list = False
+
+    for raw in lines:
+        line = raw.rstrip()
+        stripped = line.lstrip()
+        if stripped.startswith(("- ", "* ")):
+            flush_para()
+            flush_list_open()
+            out.append(f"<li>{stripped[2:].strip()}</li>")
+        elif not line:
+            flush_para()
+            flush_list_close()
+        else:
+            flush_list_close()
+            buf.append(line.strip())
+
+    flush_para()
+    flush_list_close()
+
+    body = "\n".join(out)
+    if disclaimer:
+        body += f'<span class="disclaimer-inline">{disclaimer}</span>'
+    return f'<div class="prose">{body}</div>'
+
+
+def render_assistant_message(text: str) -> None:
+    st.markdown(md_to_prose_html(text), unsafe_allow_html=True)
 
 
 def render_sources(chunks: list[LegalChunk]) -> None:
@@ -470,7 +606,10 @@ if not st.session_state.messages:
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        if msg["role"] == "assistant":
+            render_assistant_message(msg["content"])
+        else:
+            st.markdown(msg["content"])
         if msg.get("sources"):
             render_sources(msg["sources"])
 
@@ -495,6 +634,7 @@ if user_question:
     with st.chat_message("assistant"):
         full_response = ""
         response = None
+        sources = []
         try:
             with st.spinner("Recherche dans le corpus juridique…"):
                 response = agent.answer(
@@ -503,15 +643,27 @@ if user_question:
                     history=history_for_llm,
                     include_uploads=bool(st.session_state.get("has_upload")),
                 )
-            full_response = st.write_stream(response)
-            # Fallback : si l'agent n'a pas utilisé de tool, récupérer des sources
+            # Stream dans un placeholder qu'on remplace par le rendu prose final
+            placeholder = st.empty()
+            buffer: list[str] = []
+            for token in response:
+                buffer.append(token)
+                # Rendu progressif échappé (évite les ** bruts qui clignotent)
+                partial = "".join(buffer)
+                placeholder.markdown(
+                    f'<div class="prose"><p>{html.escape(partial)}</p></div>',
+                    unsafe_allow_html=True,
+                )
+            full_response = "".join(buffer)
+            placeholder.markdown(
+                md_to_prose_html(full_response), unsafe_allow_html=True
+            )
             sources = list(response.sources) if response else []
             if not sources:
                 sources = _fetch_sources_fallback(agent, user_question, selected_domaine)
             render_sources(sources)
         except Exception as exc:  # noqa: BLE001
             st.error(f"Erreur lors de la génération de la réponse : {exc}")
-            sources = []
 
     if full_response:
         st.session_state.messages.append(

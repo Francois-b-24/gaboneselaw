@@ -44,6 +44,8 @@ LegalRetriever().search("licenciement abusif", domaine="travail", k=3)
 
 Tool definitions live in `src/agent/tools.py` (OpenAI/Groq JSON schemas). Execution dispatch is in `src/agent/tool_executor.py`. Adding a new tool means: (1) add schema to `tools.py`, (2) add execution branch to `tool_executor.py`, (3) mention it in the system prompt.
 
+`synthese_document` and `generer_rapport` are dual-use: the LLM can call them mid-loop, **and** `app.py` exposes them directly as "Synthétiser" / "Générer un rapport" buttons under the last assistant message. Both paths go through `src/agent/synthesizer.py`.
+
 ### Corpus sources
 
 The corpus is built from **two source types**, both indexed into the same Chroma collection `droit_gabonais` and distinguished by the metadata field `source_type`:
@@ -62,11 +64,11 @@ A third, ephemeral source: **user-uploaded PDFs** via the Streamlit sidebar. Ind
    - If `delta.content` → yields tokens to `app.py` (streaming), loop ends.
    - Max `MAX_AGENT_ITERATIONS` rounds (default 5).
 4. **`AgentResponse`** (`src/agent/response.py`) wraps the generator — iterable for `st.write_stream`, collects sources in `.sources`.
-5. **`app.py`** renders tokens with `st.write_stream(response)` and displays `response.sources` in the expander. When a response has sources, action buttons appear under the chat: Synthétiser, Générer un rapport, Télécharger.
+5. **`app.py`** renders tokens with `st.write_stream(response)` and displays `response.sources` in the expander. The "Aller plus loin" panel (Synthétiser / Générer un rapport / Télécharger) appears under every assistant reply. If `response.sources` is empty (e.g. the LLM answered without calling `recherche_juridique`), `app.py` falls back to `agent.retriever.search(last_user_question, ...)` so the buttons still have chunks to work with — do not remove this fallback or the buttons become no-ops on tool-less replies.
 
 ### Key design points (don't break these)
 
-- **e5 embedding prefixes are load-bearing.** `intfloat/multilingual-e5-base` requires `passage: ` at indexing time and `query: ` at search time. `E5EmbeddingFunction` (passed to Chroma) uses `passage:`; `embed_query()` is called explicitly in `LegalRetriever.search` to apply `query:`. Do **not** route queries through the Chroma embedding function — that would prefix them with `passage:` and silently degrade retrieval.
+- **e5 embedding prefixes are load-bearing.** `intfloat/multilingual-e5-base` requires `passage: ` at indexing time and `query: ` at search time. In `src/rag/embeddings.py`, `E5EmbeddingFunction` (passed to Chroma) uses `passage:`; `embed_query()` applies `query:` and is called explicitly in `LegalRetriever.search`. Do **not** route queries through the Chroma embedding function — that would prefix them with `passage:` and silently degrade retrieval.
 
 - **Groq model fallback.** `GROQ_MODEL` (default `llama-3.3-70b-versatile`) can disappear from Groq's catalog. `GroqLLM.stream_with_tools` catches the first failure and retries once with `GROQ_MODEL_FALLBACK` (`llama-3.1-8b-instant`). Keep this fallback path intact.
 
@@ -78,7 +80,7 @@ A third, ephemeral source: **user-uploaded PDFs** via the Streamlit sidebar. Ind
 
 - **System prompt enforces non-negotiable rules** (`src/agent/prompts.py`, `SYSTEM_PROMPT`): answer only from provided context, cite every claim as `[Source : <code>, <article>]`, admit when out-of-scope, always close with the legal disclaimer. If you change prompt behavior, preserve these four invariants — this is a legal-information tool.
 
-- **Streamlit caching.** `get_agent()` uses `@st.cache_resource` so the sentence-transformers model and Chroma client are loaded once per session. Don't instantiate `LegalAgent` / `LegalRetriever` outside this cache in the UI layer.
+- **Streamlit caching + embedding warm-up.** `get_agent()` uses `@st.cache_resource` so the sentence-transformers model and Chroma client are loaded once per session, then immediately calls `embed_query("init")` to force the model into memory — this removes a multi-second cold start on the first real question. Don't instantiate `LegalAgent` / `LegalRetriever` outside this cache in the UI layer, and don't drop the warm-up.
 
 ### Config
 
