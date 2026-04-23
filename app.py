@@ -31,8 +31,8 @@ DOMAINE_CHOICES = {"Tous les domaines": None} | {
 }
 
 SAMPLE_QUESTIONS = [
-    "Quelle est la durée du préavis de licenciement selon mon ancienneté ?",
-    "Comment sont calculées les indemnités de licenciement ?",
+    "Quelle est la durée du préavis en cas de démission ou de licenciement ?",
+    "Comment est calculée l'indemnité de licenciement selon l'ancienneté ?",
     "Quelles sont les règles sur les heures supplémentaires et leur majoration ?",
     "Calcule mon indemnité pour 8 ans d'ancienneté et 450 000 FCFA par mois",
 ]
