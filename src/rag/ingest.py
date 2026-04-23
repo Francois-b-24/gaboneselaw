@@ -1,76 +1,145 @@
-"""Ingestion du corpus juridique dans ChromaDB.
+"""Ingestion unifiée du corpus juridique dans ChromaDB.
 
 Usage :
     python -m src.rag.ingest
 
-Parcourt ``data/legal_corpus/*.md``, découpe chaque fichier par article
-(``## Article ...``), crée les embeddings et insère le tout dans une
-collection Chroma persistante.
+Pipeline :
+  1. PDF        — ``data/pdfs/*.pdf`` + ``data/pdfs/manifest.yaml``
+  2. Web        — URLs listées dans ``data/web_sources.yaml``
+
+Toutes les sources sont indexées dans la même collection Chroma
+``droit_gabonais``, différenciées par la métadonnée ``source_type`` ∈
+{``pdf``, ``web``}.
 
 Idempotent : supprime et recrée la collection à chaque exécution.
 """
 
 from __future__ import annotations
 
+import logging
 import re
 import sys
 from pathlib import Path
 
 import chromadb
+import yaml
 
 from src.config import (
     CHROMA_PATH,
-    CHUNK_MAX_CHARS,
     COLLECTION_NAME,
-    CORPUS_DIR,
     DOMAINES,
+    PDF_DIR,
+    PDF_MANIFEST_FILE,
+    WEB_SOURCES_FILE,
 )
 from src.rag.embeddings import E5EmbeddingFunction
+from src.rag.loaders import load_source, load_url
 
-ARTICLE_SPLIT_RE = re.compile(r"\n(?=##\s+Article\b)", re.IGNORECASE)
-ARTICLE_HEADER_RE = re.compile(r"^##\s+(Article[^\n]+)", re.IGNORECASE)
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+
+_SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
-def parse_markdown(path: Path) -> list[dict]:
-    """Découpe un fichier markdown en chunks par article.
+def _slugify(text: str) -> str:
+    return _SLUG_RE.sub("-", text.lower()).strip("-") or "item"
 
-    Retourne une liste de dicts ``{text, article}``.
-    """
-    content = path.read_text(encoding="utf-8")
-    # On retire l'en-tête (# Titre ...) et le préambule éventuel avant le premier article.
-    parts = ARTICLE_SPLIT_RE.split(content)
-    chunks: list[dict] = []
-    for part in parts:
-        part = part.strip()
-        if not part.lower().startswith("## article"):
+
+def _load_yaml(path: Path) -> list | dict:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data or []
+
+
+def _ingest_pdfs(collection) -> int:
+    if not PDF_DIR.exists():
+        return 0
+    manifest_raw = _load_yaml(PDF_MANIFEST_FILE)
+    manifest = {entry["file"]: entry for entry in manifest_raw if isinstance(entry, dict) and "file" in entry}
+
+    total = 0
+    for pdf_file in sorted(PDF_DIR.glob("*.pdf")):
+        entry = manifest.get(pdf_file.name)
+        if entry is None:
+            print(f"[skip] {pdf_file.name} : absent de manifest.yaml")
             continue
-        header_match = ARTICLE_HEADER_RE.match(part)
-        article_label = header_match.group(1).strip() if header_match else "Article"
-        # Tronçonnage de secours si l'article est anormalement long
-        if len(part) <= CHUNK_MAX_CHARS:
-            chunks.append({"text": part, "article": article_label})
-        else:
-            # Split par paragraphes
-            buf = ""
-            for para in part.split("\n\n"):
-                if len(buf) + len(para) + 2 > CHUNK_MAX_CHARS and buf:
-                    chunks.append({"text": buf.strip(), "article": article_label})
-                    buf = para
-                else:
-                    buf = f"{buf}\n\n{para}" if buf else para
-            if buf.strip():
-                chunks.append({"text": buf.strip(), "article": article_label})
-    return chunks
+        domaine_key = entry.get("domaine")
+        if domaine_key not in DOMAINES:
+            print(f"[skip] {pdf_file.name} : domaine inconnu ({domaine_key})")
+            continue
+        domaine_meta = DOMAINES[domaine_key]
+        source_label = entry.get("source") or domaine_meta["source"]
+        chunks = load_source(pdf_file)
+        if not chunks:
+            print(f"[skip] {pdf_file.name} : aucun texte extrait (PDF scanné ?)")
+            continue
+        stem = _slugify(pdf_file.stem)
+        ids = [f"pdf-{stem}-{i}" for i in range(len(chunks))]
+        documents = [c["text"] for c in chunks]
+        metadatas = [
+            {
+                "domaine": domaine_key,
+                "domaine_label": domaine_meta["label"],
+                "source": source_label,
+                "page": c["page"],
+                "article": f"page {c['page']}",
+                "file": pdf_file.name,
+                "source_type": "pdf",
+            }
+            for c in chunks
+        ]
+        collection.add(ids=ids, documents=documents, metadatas=metadatas)
+        total += len(chunks)
+        print(f"[ok] {pdf_file.name} : {len(chunks)} chunks indexés")
+    return total
+
+
+def _ingest_web(collection) -> int:
+    sources = _load_yaml(WEB_SOURCES_FILE)
+    if not isinstance(sources, list) or not sources:
+        return 0
+    total = 0
+    for entry in sources:
+        if not isinstance(entry, dict):
+            continue
+        url = entry.get("url")
+        domaine_key = entry.get("domaine")
+        if not url or domaine_key not in DOMAINES:
+            print(f"[skip] web : entrée invalide {entry!r}")
+            continue
+        domaine_meta = DOMAINES[domaine_key]
+        source_label = entry.get("source") or domaine_meta["source"]
+        chunks = load_url(url)
+        if not chunks:
+            print(f"[skip] {url} : contenu vide ou erreur réseau")
+            continue
+        slug = _slugify(url)[:60]
+        ids = [f"web-{slug}-{i}" for i in range(len(chunks))]
+        documents = [c["text"] for c in chunks]
+        metadatas = [
+            {
+                "domaine": domaine_key,
+                "domaine_label": domaine_meta["label"],
+                "source": source_label,
+                "url": c["url"],
+                "title": c.get("title", ""),
+                "scraped_at": c.get("scraped_at", ""),
+                "article": c.get("title") or url,
+                "source_type": "web",
+            }
+            for c in chunks
+        ]
+        collection.add(ids=ids, documents=documents, metadatas=metadatas)
+        total += len(chunks)
+        print(f"[ok] {url} : {len(chunks)} chunks indexés")
+    return total
 
 
 def main() -> int:
-    if not CORPUS_DIR.exists():
-        print(f"[ERREUR] Dossier corpus introuvable : {CORPUS_DIR}", file=sys.stderr)
-        return 1
-
     client = chromadb.PersistentClient(path=CHROMA_PATH)
 
-    # Recréation propre de la collection
     try:
         client.delete_collection(COLLECTION_NAME)
         print(f"[info] Collection existante '{COLLECTION_NAME}' supprimée.")
@@ -80,37 +149,16 @@ def main() -> int:
     collection = client.create_collection(
         name=COLLECTION_NAME,
         embedding_function=E5EmbeddingFunction(prefix="passage: "),
-        metadata={"description": "Corpus juridique gabonais — démo"},
+        metadata={"description": "Corpus juridique gabonais — PDF + Web"},
     )
 
     total = 0
-    for md_file in sorted(CORPUS_DIR.glob("*.md")):
-        domaine_key = md_file.stem  # ex: "travail"
-        if domaine_key not in DOMAINES:
-            print(f"[skip] {md_file.name} : domaine inconnu ({domaine_key})")
-            continue
+    total += _ingest_pdfs(collection)
+    total += _ingest_web(collection)
 
-        domaine_meta = DOMAINES[domaine_key]
-        chunks = parse_markdown(md_file)
-        if not chunks:
-            print(f"[skip] {md_file.name} : aucun article détecté")
-            continue
-
-        ids = [f"{domaine_key}-{i}" for i in range(len(chunks))]
-        documents = [c["text"] for c in chunks]
-        metadatas = [
-            {
-                "domaine": domaine_key,
-                "domaine_label": domaine_meta["label"],
-                "source": domaine_meta["source"],
-                "article": c["article"],
-                "file": md_file.name,
-            }
-            for c in chunks
-        ]
-        collection.add(ids=ids, documents=documents, metadatas=metadatas)
-        total += len(chunks)
-        print(f"[ok] {md_file.name} : {len(chunks)} chunks indexés")
+    if total == 0:
+        print("[ERREUR] Aucun chunk indexé. Vérifier le corpus.", file=sys.stderr)
+        return 1
 
     print(f"\n✅ {total} chunks indexés dans la collection '{COLLECTION_NAME}'.")
     print(f"   Persistance : {CHROMA_PATH}")

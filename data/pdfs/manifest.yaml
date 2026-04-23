@@ -1,0 +1,23 @@
+# Manifest des PDFs indexés en permanence dans la base vectorielle.
+#
+# Chaque PDF présent dans ce dossier doit avoir une entrée ici, sinon
+# il est ignoré lors de l'ingestion (`python -m src.rag.ingest`).
+#
+# Format :
+# - file: nom_du_fichier.pdf    # relatif à data/pdfs/
+#   domaine: travail | foncier | famille
+#   source: "Libellé humain de la source (code, loi, arrêt...)"
+
+
+
+- file: travail.pdf
+  domaine: travail
+  source: "Journal officiel de la République Gabonaise 16 AU 23 NOVEMBRE 2021 - N°139"
+
+- file: travail_1.pdf
+  domaine: travail
+  source: "MEMENTO THEMATIQUE, Christophe Adrien RELONGOUE, Conseil Juridique Inscrit, Conseil Fiscal Agréé CEMAC, Editon 2013"
+
+- file: code-travail-2021.pdf
+  domaine: travail
+  source: "Code du travail 2021"

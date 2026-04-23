@@ -12,17 +12,21 @@ L'objectif est de rendre le droit gabonais plus accessible aux citoyens en répo
 
 - **LLM** : Mistral via [Groq](https://groq.com/) (streaming)
 - **RAG** : ChromaDB + embeddings multilingues (`intfloat/multilingual-e5-base`)
-- **UI** : Streamlit (chat, citations, historique, filtre par domaine)
-- **Corpus** : jeu de démonstration dans `data/legal_corpus/` (à enrichir)
+- **UI** : Streamlit (chat, citations, historique, filtre par domaine, upload PDF à la volée, synthèse/rapport)
+- **Corpus** : PDFs officiels (`data/pdfs/`) + pages web (`data/web_sources.yaml`)
 
 ```
 first/
 ├── app.py                    # UI Streamlit
 ├── src/
 │   ├── config.py
-│   ├── rag/                  # Ingestion & retriever Chroma
-│   └── agent/                # Prompts, client Groq, orchestration
-└── data/legal_corpus/        # Corpus juridique (markdown)
+│   ├── rag/                  # Ingestion, loaders (PDF/Web), retriever Chroma
+│   └── agent/                # Prompts, client Groq, tools, synthesizer
+└── data/
+    ├── pdfs/
+    │   ├── manifest.yaml     # Mapping fichier → domaine + source
+    │   └── *.pdf
+    └── web_sources.yaml      # URLs à scraper
 ```
 
 ---
@@ -51,7 +55,12 @@ cp .env.example .env
 python -m src.rag.ingest
 ```
 
-Cette commande charge les fichiers `data/legal_corpus/*.md`, crée les embeddings et les persiste dans `chroma_db/`.
+Cette commande :
+1. Parcourt `data/pdfs/*.pdf` et indexe ceux qui ont une entrée dans `manifest.yaml`.
+2. Scrape les URLs listées dans `data/web_sources.yaml`.
+3. Crée les embeddings et les persiste dans `chroma_db/`.
+
+La collection est **recréée à chaque run** (idempotent et destructif).
 
 ## Lancement de l'application
 
@@ -65,22 +74,39 @@ Ouvrir http://localhost:8501 dans votre navigateur.
 
 ## Enrichir le corpus
 
-Le corpus fourni est **un jeu de démonstration minimal** destiné à valider le pipeline. Pour un usage réel, il faut l'enrichir avec les textes officiels complets (Code du travail, Code civil, lois foncières, etc.).
+### Ajouter un PDF permanent
 
-1. Ajouter de nouveaux fichiers `.md` dans `data/legal_corpus/` en respectant le format :
+1. Déposer le fichier dans `data/pdfs/`.
+2. Ajouter une entrée dans `data/pdfs/manifest.yaml` :
 
-   ```markdown
-   # Titre du code
-
-   ## Article X — Intitulé
-   Texte de l'article...
-
-   ## Article Y — Intitulé
-   Texte de l'article...
+   ```yaml
+   - file: mon-document.pdf
+     domaine: travail          # travail | foncier | famille
+     source: "Libellé humain affiché dans les sources citées"
    ```
 
-2. Ajouter le nom de fichier (sans extension) à `DOMAINE_BY_FILE` dans `src/rag/ingest.py` si nécessaire.
 3. Relancer `python -m src.rag.ingest`.
+
+Un PDF sans entrée de manifest est ignoré à l'ingestion.
+
+### Ajouter une URL
+
+1. Éditer `data/web_sources.yaml` et ajouter :
+
+   ```yaml
+   - url: https://example.ga/page-juridique
+     domaine: travail
+     source: "Nom lisible de la page"
+   ```
+
+2. Vérifier que le site autorise le scraping (robots.txt, CGU).
+3. Relancer `python -m src.rag.ingest`.
+
+Le loader web extrait uniquement du **HTML** — pour une URL qui pointe vers un PDF, télécharger le fichier localement et le placer dans `data/pdfs/`.
+
+### Analyser un PDF ponctuel depuis l'UI
+
+Dans la sidebar Streamlit, utiliser le bouton **« Analyser un document »** pour uploader un PDF. Il est indexé dans une collection séparée, fusionné avec les résultats de recherche pendant la session, et libéré au prochain chargement.
 
 ---
 

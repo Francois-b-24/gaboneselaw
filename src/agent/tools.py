@@ -91,8 +91,70 @@ TOOL_CALCULER_INDEMNITE = {
     },
 }
 
+TOOL_SYNTHESE_DOCUMENT = {
+    "type": "function",
+    "function": {
+        "name": "synthese_document",
+        "description": (
+            "Produit une synthèse en bullets des règles juridiques sur un sujet. "
+            "À utiliser UNIQUEMENT quand le citoyen demande explicitement une "
+            "synthèse, un résumé ou une vue d'ensemble sur un sujet juridique."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Sujet à synthétiser (sert aussi à récupérer les extraits)",
+                },
+                "domaine": {
+                    "type": "string",
+                    "enum": ["travail", "foncier", "famille"],
+                    "description": "Domaine juridique pour filtrer (optionnel)",
+                },
+                "focus": {
+                    "type": "string",
+                    "description": "Angle particulier à privilégier dans la synthèse (optionnel)",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+}
+
+
+TOOL_GENERER_RAPPORT = {
+    "type": "function",
+    "function": {
+        "name": "generer_rapport",
+        "description": (
+            "Rédige un rapport juridique structuré (contexte, cadre, points clés, "
+            "démarches pratiques) sur un sujet donné. À utiliser UNIQUEMENT quand le "
+            "citoyen demande explicitement un rapport ou un document structuré."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sujet": {
+                    "type": "string",
+                    "description": "Sujet du rapport (ex: 'Licenciement abusif au Gabon')",
+                },
+                "domaine": {
+                    "type": "string",
+                    "enum": ["travail", "foncier", "famille"],
+                    "description": "Domaine juridique pour filtrer (optionnel)",
+                },
+            },
+            "required": ["sujet"],
+        },
+    },
+}
+
+
 ALL_TOOLS: list[dict] = [
     TOOL_RECHERCHE_JURIDIQUE,
     TOOL_LIRE_ARTICLE,
     TOOL_CALCULER_INDEMNITE,
+    TOOL_SYNTHESE_DOCUMENT,
+    TOOL_GENERER_RAPPORT,
 ]

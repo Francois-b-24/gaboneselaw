@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Agent **"Info Juridique Citoyenne"** — a Streamlit app that vulgarizes Gabonese law (labor, land, family) for citizens. **Agentic RAG with tool use** over a markdown legal corpus, LLM via Groq for generation. Primary working language of the project and its users is **French**.
+Agent **"Info Juridique Citoyenne"** — a Streamlit app that vulgarizes Gabonese law (labor, land, family) for citizens. **Agentic RAG with tool use** over a corpus of PDFs and scraped web pages, LLM via Groq for generation. Primary working language of the project and its users is **French**.
 
 ## Commands
 
@@ -14,7 +14,8 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env          # then set GROQ_API_KEY
 
-# (Re)build the vector index — required before first run and after any change to data/legal_corpus/
+# (Re)build the vector index — required before first run and after any change to
+# data/pdfs/ or data/web_sources.yaml
 python -m src.rag.ingest
 
 # Run the app
@@ -38,19 +39,30 @@ LegalRetriever().search("licenciement abusif", domaine="travail", k=3)
 | `recherche_juridique` | Semantic search in the legal corpus | `LegalRetriever.search()` |
 | `lire_article` | Read a specific article by number | `LegalRetriever.get_article()` |
 | `calculer_indemnite` | Compute severance/notice (Art. 72 & 75) | `src/agent/calculator.py` |
+| `synthese_document` | Summarize retrieved extracts on a topic | `src/agent/synthesizer.py` |
+| `generer_rapport` | Generate a structured markdown report | `src/agent/synthesizer.py` |
 
 Tool definitions live in `src/agent/tools.py` (OpenAI/Groq JSON schemas). Execution dispatch is in `src/agent/tool_executor.py`. Adding a new tool means: (1) add schema to `tools.py`, (2) add execution branch to `tool_executor.py`, (3) mention it in the system prompt.
 
+### Corpus sources
+
+The corpus is built from **two source types**, both indexed into the same Chroma collection `droit_gabonais` and distinguished by the metadata field `source_type`:
+
+- **PDFs** (`data/pdfs/*.pdf`) — authoritative documents (codes, JO, doctrine). Each PDF must have a matching entry in `data/pdfs/manifest.yaml` mapping it to a `domaine` and a human-readable `source` label. PDFs without a manifest entry are skipped.
+- **Web pages** (`data/web_sources.yaml`) — list of URLs scraped at ingestion time. Each entry declares `url`, `domaine`, and `source`. The loader extracts the `<main>`/`<article>`/body text, strips nav/script/footer, and chunks.
+
+A third, ephemeral source: **user-uploaded PDFs** via the Streamlit sidebar. Indexed into a separate collection `droit_gabonais_uploads` (recreated on every upload) and merged into retriever results when `include_uploads=True`.
+
 ### Data flow (one user question)
 
-1. **`app.py`** captures the question + selected `domaine` filter + full chat history from `st.session_state.messages`.
+1. **`app.py`** captures the question + selected `domaine` filter + full chat history from `st.session_state.messages`, plus an `include_uploads` flag if the user has a PDF attached.
 2. **`LegalAgent.answer`** (`src/agent/agent.py`) builds the message list `[system_prompt, *history, user_question]` and enters the **agent loop**.
 3. **Agent loop** (`_agent_loop`): calls `GroqLLM.stream_with_tools()` with `tools=ALL_TOOLS`. Inspects the stream:
-   - If `delta.tool_calls` → accumulates JSON args, executes tools via `tool_executor.execute_tool()`, appends results as `role: tool` messages, loops back.
+   - If `delta.tool_calls` → accumulates JSON args, executes tools via `tool_executor.execute_tool()` (passing `llm` + `include_uploads`), appends results as `role: tool` messages, loops back.
    - If `delta.content` → yields tokens to `app.py` (streaming), loop ends.
    - Max `MAX_AGENT_ITERATIONS` rounds (default 5).
 4. **`AgentResponse`** (`src/agent/response.py`) wraps the generator — iterable for `st.write_stream`, collects sources in `.sources`.
-5. **`app.py`** renders tokens with `st.write_stream(response)` and displays `response.sources` in the expander.
+5. **`app.py`** renders tokens with `st.write_stream(response)` and displays `response.sources` in the expander. When a response has sources, action buttons appear under the chat: Synthétiser, Générer un rapport, Télécharger.
 
 ### Key design points (don't break these)
 
@@ -58,9 +70,11 @@ Tool definitions live in `src/agent/tools.py` (OpenAI/Groq JSON schemas). Execut
 
 - **Groq model fallback.** `GROQ_MODEL` (default `llama-3.3-70b-versatile`) can disappear from Groq's catalog. `GroqLLM.stream_with_tools` catches the first failure and retries once with `GROQ_MODEL_FALLBACK` (`llama-3.1-8b-instant`). Keep this fallback path intact.
 
-- **Domain filter is metadata-based.** Each chunk is tagged with `domaine` (`travail` / `foncier` / `famille`) during ingestion. The sidebar radio in `app.py` maps user-friendly labels to these keys via `DOMAINE_CHOICES`. Adding a new domain means: (1) new `.md` file in `data/legal_corpus/`, (2) new entry in `DOMAINES` in `src/config.py`, (3) re-run `ingest`.
+- **Domain filter is metadata-based.** Each chunk is tagged with `domaine` (`travail` / `foncier` / `famille`) during ingestion. The sidebar radio in `app.py` maps user-friendly labels to these keys via `DOMAINE_CHOICES`. Adding a new domain means: (1) new entry in `DOMAINES` in `src/config.py`, (2) PDFs in `data/pdfs/` + matching `manifest.yaml` entries, (3) re-run `ingest`.
 
-- **Ingestion is idempotent but destructive.** `src/rag/ingest.py` deletes and recreates the collection on every run. Markdown files are split on `## Article` headers (regex `ARTICLE_SPLIT_RE`). Any file whose stem is not in `DOMAINES` is skipped with a log line — this is intentional.
+- **Ingestion is idempotent but destructive.** `src/rag/ingest.py` deletes and recreates the main collection on every run. PDFs without a `manifest.yaml` entry, or with an unknown domain, are skipped with a log line — this is intentional.
+
+- **Web scraping is defensive.** `parse_web()` never throws on network errors — it logs a warning and returns an empty list, so one broken URL doesn't break the whole ingestion pipeline. Only HTML content is supported; a PDF URL should be downloaded and placed in `data/pdfs/` with a manifest entry instead.
 
 - **System prompt enforces non-negotiable rules** (`src/agent/prompts.py`, `SYSTEM_PROMPT`): answer only from provided context, cite every claim as `[Source : <code>, <article>]`, admit when out-of-scope, always close with the legal disclaimer. If you change prompt behavior, preserve these four invariants — this is a legal-information tool.
 
@@ -68,8 +82,8 @@ Tool definitions live in `src/agent/tools.py` (OpenAI/Groq JSON schemas). Execut
 
 ### Config
 
-All tunables live in `src/config.py` (env loaded from `.env` via `python-dotenv`): Groq model + fallback, embedding model, Chroma path/collection name, `TOP_K`, `CHUNK_MAX_CHARS`, `MAX_AGENT_ITERATIONS`, and the `DOMAINES` registry. Prefer editing this file over scattering constants.
+All tunables live in `src/config.py` (env loaded from `.env` via `python-dotenv`): Groq model + fallback, embedding model, Chroma path + collection names (main + uploads), `PDF_DIR`, `PDF_MANIFEST_FILE`, `WEB_SOURCES_FILE`, `TOP_K`, `CHUNK_MAX_CHARS`, `MAX_AGENT_ITERATIONS`, and the `DOMAINES` registry. Prefer editing this file over scattering constants.
 
 ## Corpus caveat
 
-`data/legal_corpus/*.md` is a **hand-written demo corpus** with simplified article excerpts — not the authoritative text. The README and in-file warnings make this explicit. Do not treat article numbers or wording as citeable legal truth; they exist to validate the pipeline end-to-end.
+The PDFs in `data/pdfs/` and the URLs in `data/web_sources.yaml` are the project's real sources — check each one against the authoritative published text before relying on it for a legal decision. The app explicitly warns users that it provides general legal information, not legal advice.

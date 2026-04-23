@@ -1,0 +1,19 @@
+# Liste des URLs scrapées lors de l'ingestion.
+#
+# Format :
+# - url: <URL absolue>
+#   domaine: travail | foncier | famille
+#   source: "Libellé humain affiché dans les sources citées"
+#
+# Avant d'ajouter une URL, vérifier :
+#  1. que le site autorise le scraping (robots.txt, CGU) ;
+#  2. que la page cible contient du contenu stable (éviter les pages de résultats
+#     dynamiques, les formulaires, les PDFs embedded — pour les PDFs, utiliser
+#     data/pdfs/ à la place).
+#
+# Laisser ce fichier vide (ou avec des entrées commentées) n'empêche pas
+# l'ingestion des autres sources de fonctionner.
+
+- url: https://journal-officiel.ga/20188-13-2023-/
+  domaine: foncier
+  source: "JOURNAL OFFICIEL N°220 SEXIES DU 31 JUILLET 2023"

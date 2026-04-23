@@ -26,11 +26,14 @@ class LegalAgent:
         question: str,
         domaine: str | None = None,
         history: list[dict[str, str]] | None = None,
+        include_uploads: bool = False,
     ) -> AgentResponse:
         """Répond à une question juridique via la boucle agent.
 
         Le LLM décide quels outils appeler. Les tokens de la réponse finale
         sont streamés. Les sources sont collectées dans ``response.sources``.
+        ``include_uploads`` active la recherche dans la collection de PDFs
+        uploadés à la volée.
         """
         messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
         if history:
@@ -41,7 +44,7 @@ class LegalAgent:
         messages.append({"role": "user", "content": build_user_message(question, domaine)})
 
         def _generate(sources_collector: list[LegalChunk]) -> Iterator[str]:
-            yield from self._agent_loop(messages, domaine, sources_collector)
+            yield from self._agent_loop(messages, domaine, sources_collector, include_uploads)
 
         return AgentResponse(_generate)
 
@@ -50,6 +53,7 @@ class LegalAgent:
         messages: list[dict],
         domaine_hint: str | None,
         sources_collector: list[LegalChunk],
+        include_uploads: bool = False,
     ) -> Iterator[str]:
         """Boucle agent : stream → detect tool_calls → execute → loop."""
         for _ in range(MAX_AGENT_ITERATIONS):
@@ -122,6 +126,8 @@ class LegalAgent:
                     args,
                     self.retriever,
                     domaine_hint=domaine_hint,
+                    llm=self.llm,
+                    include_uploads=include_uploads,
                 )
                 sources_collector.extend(chunks)
 

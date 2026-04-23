@@ -29,9 +29,14 @@ EMBEDDING_MODEL: str = "intfloat/multilingual-e5-base"
 # --- Vector store (ChromaDB) ---
 CHROMA_PATH: str = str(PROJECT_ROOT / "chroma_db")
 COLLECTION_NAME: str = "droit_gabonais"
+# Collection jetable pour les PDFs uploadés à la volée depuis l'UI — recréée à
+# chaque upload, pas persistée entre sessions.
+UPLOAD_COLLECTION_NAME: str = "droit_gabonais_uploads"
 
 # --- Corpus ---
-CORPUS_DIR: Path = PROJECT_ROOT / "data" / "legal_corpus"
+PDF_DIR: Path = PROJECT_ROOT / "data" / "pdfs"
+PDF_MANIFEST_FILE: Path = PDF_DIR / "manifest.yaml"
+WEB_SOURCES_FILE: Path = PROJECT_ROOT / "data" / "web_sources.yaml"
 
 # --- RAG ---
 TOP_K: int = 5
