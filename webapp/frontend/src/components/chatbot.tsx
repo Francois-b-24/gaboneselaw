@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Source = {
   citation: string;
@@ -97,6 +97,7 @@ export function ChatbotPanel() {
       content: INITIAL_ASSISTANT_MESSAGE,
     },
   ]);
+  const messageContainerRef = useRef<HTMLElement | null>(null);
 
   const disclaimer = useMemo(
     () =>
@@ -109,6 +110,12 @@ export function ChatbotPanel() {
     "";
   const suggestedQuestions =
     SUGGESTED_BY_DOMAIN[domaine] || SUGGESTED_BY_DOMAIN.all;
+
+  useEffect(() => {
+    const container = messageContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [messages, isLoading]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -393,8 +400,8 @@ export function ChatbotPanel() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-col px-4 py-8">
-      <h1 className="text-3xl font-semibold">
+    <main className="mx-auto flex w-full max-w-4xl flex-col px-3 py-6 sm:px-4 sm:py-8">
+      <h1 className="text-2xl font-semibold leading-snug sm:text-3xl">
         Bienvenue sur ALIN. Je peux vous aider sur le droit gabonais (travail, foncier, famille).
       </h1>
       <p className="text-muted mt-2 text-sm">{disclaimer}</p>
@@ -416,12 +423,12 @@ export function ChatbotPanel() {
         </select>
         <div className="mt-3">
           <p className="text-muted text-xs">Questions suggérées</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 -mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {suggestedQuestions.map((item) => (
               <button
                 key={item}
                 type="button"
-                className="btn-secondary rounded-full px-3 py-1 text-xs"
+                className="btn-secondary shrink-0 snap-start rounded-full px-3 py-1.5 text-xs"
                 onClick={() => setQuestion(item)}
               >
                 {item}
@@ -449,7 +456,10 @@ export function ChatbotPanel() {
         <p className="text-muted mt-2 text-xs">{uploadStatus}</p>
       </div>
 
-      <section className="surface mt-6 flex-1 space-y-4 rounded-xl p-4">
+      <section
+        ref={messageContainerRef}
+        className="surface mt-6 flex max-h-[52vh] flex-1 flex-col gap-4 overflow-y-auto rounded-xl p-3 sm:max-h-[58vh] sm:p-4"
+      >
         {isLoading && (
           <div className="surface-muted rounded-lg p-3 text-sm text-[color:var(--foreground)]">
             {loadingLabel}
@@ -458,13 +468,13 @@ export function ChatbotPanel() {
         {messages.map((msg, index) => (
           <article
             key={`${msg.role}-${index}`}
-            className={`rounded-lg p-3 ${
+            className={`rounded-lg p-3 text-sm ${
               msg.role === "user"
-                ? "ml-10 border border-amber-300/30 bg-slate-700 text-slate-50"
-                : "surface-muted mr-10 text-[color:var(--foreground)]"
+                ? "ml-4 border border-amber-300/30 bg-slate-700 text-slate-50 sm:ml-10"
+                : "surface-muted mr-4 text-[color:var(--foreground)] sm:mr-10"
             }`}
           >
-            <p className="whitespace-pre-wrap text-sm">{msg.content || "..."}</p>
+            <p className="whitespace-pre-wrap">{msg.content || "..."}</p>
             {!!msg.sources?.length && (
               <div className="mt-3 space-y-2 border-t pt-3" style={{ borderColor: "var(--border)" }}>
                 {msg.sources.map((source, sourceIndex) => (
@@ -490,27 +500,29 @@ export function ChatbotPanel() {
         ))}
       </section>
 
-      <form onSubmit={onSubmit} className="mt-4 flex gap-2">
-        <input
-          value={question}
-          onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Posez votre question juridique..."
-          className="surface flex-1 rounded-md bg-transparent px-3 py-2 text-sm outline-none"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="btn-primary rounded-md px-4 py-2 text-sm disabled:opacity-50"
-        >
-          {isLoading ? "Analyse..." : "Envoyer"}
-        </button>
+      <form onSubmit={onSubmit} className="surface mt-4 rounded-xl p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+          <input
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="Posez votre question juridique..."
+            className="surface min-h-11 w-full flex-1 rounded-md bg-transparent px-3 py-2.5 text-sm outline-none sm:min-h-0"
+          />
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-primary shrink-0 rounded-md px-4 py-2.5 text-sm disabled:opacity-50 sm:min-w-[7rem]"
+          >
+            {isLoading ? "Analyse..." : "Envoyer"}
+          </button>
+        </div>
       </form>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <button
           type="button"
           onClick={runSynthesis}
           disabled={isLoading}
-          className="btn-secondary rounded-md px-4 py-2 text-sm disabled:opacity-50"
+          className="btn-secondary w-full rounded-md px-4 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
         >
           Synthèse des sources
         </button>
@@ -518,7 +530,7 @@ export function ChatbotPanel() {
           type="button"
           onClick={runReport}
           disabled={isLoading}
-          className="btn-secondary rounded-md px-4 py-2 text-sm disabled:opacity-50"
+          className="btn-secondary w-full rounded-md px-4 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
         >
           Générer un rapport
         </button>
@@ -526,7 +538,7 @@ export function ChatbotPanel() {
           type="button"
           onClick={downloadReportPdf}
           disabled={isLoading}
-          className="btn-secondary rounded-md px-4 py-2 text-sm disabled:opacity-50"
+          className="btn-secondary w-full rounded-md px-4 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
         >
           Télécharger le PDF
         </button>
@@ -534,7 +546,7 @@ export function ChatbotPanel() {
           type="button"
           onClick={clearConversation}
           disabled={isLoading}
-          className="btn-secondary rounded-md px-4 py-2 text-sm disabled:opacity-50"
+          className="btn-secondary w-full rounded-md px-4 py-2.5 text-sm disabled:opacity-50 sm:w-auto"
         >
           Supprimer la conversation
         </button>

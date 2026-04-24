@@ -1,7 +1,7 @@
 export default function ContactPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">Contact</h1>
+    <main className="mx-auto w-full max-w-4xl px-3 py-10 sm:px-4 sm:py-12">
+      <h1 className="text-2xl font-semibold sm:text-3xl">Contact</h1>
       <p className="text-muted mt-4">
         Pour toute question sur le projet, les contenus pédagogiques, ou pour
         proposer une source juridique officielle, vous pouvez nous contacter.

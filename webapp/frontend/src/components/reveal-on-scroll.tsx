@@ -9,6 +9,22 @@ type RevealOnScrollProps = {
   delayMs?: number;
 };
 
+function isCoarseOrNarrowViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  const narrow = window.matchMedia("(max-width: 767px)").matches;
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  return narrow || coarse;
+}
+
+function visibleRatioInViewport(el: HTMLElement): number {
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight || 1;
+  const visibleTop = Math.max(rect.top, 0);
+  const visibleBottom = Math.min(rect.bottom, vh);
+  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+  return visibleHeight / Math.max(rect.height, 1);
+}
+
 export function RevealOnScroll({
   children,
   className,
@@ -17,31 +33,84 @@ export function RevealOnScroll({
 }: RevealOnScrollProps) {
   const ref = useRef<HTMLElement | null>(null);
   const visibleRef = useRef(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
 
+    const clearHideTimer = () => {
+      if (hideTimerRef.current !== null) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
+    };
+
+    const applyShow = () => {
+      clearHideTimer();
+      visibleRef.current = true;
+      node.classList.remove("is-visible");
+      void node.offsetWidth;
+      node.classList.add("is-visible");
+    };
+
+    const applyHide = () => {
+      clearHideTimer();
+      visibleRef.current = false;
+      node.classList.remove("is-visible");
+    };
+
+    const rootMargin = isCoarseOrNarrowViewport()
+      ? "0px 0px -10% 0px"
+      : "0px 0px -6% 0px";
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Hystérésis pour éviter les bascules rapides (effet "tremblement")
-        // quand la section est proche du seuil de visibilité.
-        const shouldShow = entry.intersectionRatio >= 0.24;
-        const shouldHide = entry.intersectionRatio <= 0.08;
+        const mobile = isCoarseOrNarrowViewport();
+        const showThreshold = mobile ? 0.3 : 0.2;
+        const hideThreshold = mobile ? 0.045 : 0.075;
 
-        if (!visibleRef.current && shouldShow) {
-          visibleRef.current = true;
-          node.classList.add("is-visible");
-        } else if (visibleRef.current && shouldHide) {
-          visibleRef.current = false;
-          node.classList.remove("is-visible");
+        const shouldShow =
+          entry.isIntersecting && entry.intersectionRatio >= showThreshold;
+        const shouldHide = entry.intersectionRatio <= hideThreshold;
+
+        if (shouldShow) {
+          clearHideTimer();
+          if (!visibleRef.current) {
+            applyShow();
+          }
+          return;
+        }
+
+        if (!visibleRef.current || !shouldHide) {
+          return;
+        }
+
+        if (mobile) {
+          if (hideTimerRef.current !== null) return;
+          hideTimerRef.current = setTimeout(() => {
+            hideTimerRef.current = null;
+            const el = ref.current;
+            if (!el || !visibleRef.current) return;
+            const ratio = visibleRatioInViewport(el);
+            if (ratio > hideThreshold) return;
+            applyHide();
+          }, 160);
+        } else {
+          applyHide();
         }
       },
-      { threshold: [0, 0.08, 0.24, 0.5, 1], rootMargin: "-6% 0px -6% 0px" }
+      {
+        threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1],
+        rootMargin,
+      }
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      clearHideTimer();
+      observer.disconnect();
+    };
   }, []);
 
   return (

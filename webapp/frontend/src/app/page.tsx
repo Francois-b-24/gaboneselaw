@@ -3,15 +3,15 @@ import { RevealOnScroll } from "@/components/reveal-on-scroll";
 
 export default function Home() {
   return (
-    <main className="apple-scroll mx-auto w-full max-w-6xl px-4 py-10">
+    <main className="apple-scroll mx-auto w-full max-w-6xl px-3 py-8 sm:px-4 sm:py-10">
       <RevealOnScroll
         id="accueil"
-        className="apple-section surface rounded-2xl p-8 shadow-sm"
+        className="apple-section surface rounded-2xl p-5 shadow-sm sm:p-8"
       >
         <p className="text-muted text-xs font-semibold uppercase tracking-wide">
           ALIN - African Legal Innovation Network
         </p>
-        <h1 className="mt-3 max-w-4xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h1 className="mt-3 max-w-4xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
           La transformation du Droit africain,
           <br />
           pensée pour <span className="title-emphasis">durer.</span>

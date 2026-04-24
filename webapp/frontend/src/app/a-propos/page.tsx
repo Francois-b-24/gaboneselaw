@@ -1,7 +1,7 @@
 export default function AProposPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">À propos</h1>
+    <main className="mx-auto w-full max-w-4xl px-3 py-10 sm:px-4 sm:py-12">
+      <h1 className="text-2xl font-semibold sm:text-3xl">À propos</h1>
       <div className="text-muted mt-4 space-y-4">
         <p>
           Info Juridique Citoyenne est un projet de vulgarisation qui relie

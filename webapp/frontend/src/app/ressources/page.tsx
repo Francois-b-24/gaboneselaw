@@ -35,8 +35,8 @@ const ITEMS = [
 
 export default function RessourcesPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">Ressources pédagogiques</h1>
+    <main className="mx-auto w-full max-w-6xl px-3 py-10 sm:px-4 sm:py-12">
+      <h1 className="text-2xl font-semibold sm:text-3xl">Ressources pédagogiques</h1>
       <p className="text-muted mt-3 max-w-3xl">
         Cette section propose des contenus de vulgarisation sur l&apos;IA et le droit,
         avec un focus sur les enjeux pratiques pour les citoyens et les PME.
