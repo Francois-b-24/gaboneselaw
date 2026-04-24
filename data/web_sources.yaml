@@ -2,8 +2,12 @@
 #
 # Format :
 # - url: <URL absolue>
-#   domaine: travail | foncier | famille
+#   domaine: travail | foncier | famille | commercial | administratif | penal | fiscal | numerique
 #   source: "Libellé humain affiché dans les sources citées"
+#   discover_pdfs: true|false   # optionnel: crawl du site pour trouver des liens PDF
+#   crawl_max_pages: 20         # optionnel
+#   crawl_max_pdfs: 30          # optionnel
+#   crawl_max_depth: 2          # optionnel
 #
 # Avant d'ajouter une URL, vérifier :
 #  1. que le site autorise le scraping (robots.txt, CGU) ;
@@ -17,3 +21,19 @@
 - url: https://journal-officiel.ga/20188-13-2023-/
   domaine: foncier
   source: "JOURNAL OFFICIEL N°220 SEXIES DU 31 JUILLET 2023"
+
+- url: https://www.legigabon.com/
+  domaine: administratif
+  source: "LégiGabon (textes et contenus juridiques)"
+  discover_pdfs: true
+  crawl_max_pages: 25
+  crawl_max_pdfs: 40
+  crawl_max_depth: 2
+
+- url: https://www.assemblee-nationale.fr/evenements/code-civil-1804-1.asp
+  domaine: famille
+  source: "Assemblée nationale (France) - Code civil 1804"
+  discover_pdfs: true
+  crawl_max_pages: 6
+  crawl_max_pdfs: 80
+  crawl_max_depth: 1

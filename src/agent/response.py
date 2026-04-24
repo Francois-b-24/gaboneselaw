@@ -21,6 +21,7 @@ class AgentResponse:
     ) -> None:
         self._factory = generator_factory
         self.sources: list[LegalChunk] = []
+        self.tools_used: list[str] = []
 
     def __iter__(self) -> Iterator[str]:
         yield from self._factory(self.sources)

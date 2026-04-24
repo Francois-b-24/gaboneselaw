@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from src.config import DOMAINES
+
+DOMAIN_ENUM = sorted(DOMAINES.keys())
+
 TOOL_RECHERCHE_JURIDIQUE = {
     "type": "function",
     "function": {
@@ -20,7 +24,7 @@ TOOL_RECHERCHE_JURIDIQUE = {
                 },
                 "domaine": {
                     "type": "string",
-                    "enum": ["travail", "foncier", "famille"],
+                    "enum": DOMAIN_ENUM,
                     "description": "Domaine juridique pour filtrer les résultats (optionnel)",
                 },
                 "k": {
@@ -51,7 +55,7 @@ TOOL_LIRE_ARTICLE = {
                 },
                 "domaine": {
                     "type": "string",
-                    "enum": ["travail", "foncier", "famille"],
+                    "enum": DOMAIN_ENUM,
                     "description": "Domaine juridique pour filtrer (optionnel)",
                 },
             },
@@ -109,7 +113,7 @@ TOOL_SYNTHESE_DOCUMENT = {
                 },
                 "domaine": {
                     "type": "string",
-                    "enum": ["travail", "foncier", "famille"],
+                    "enum": DOMAIN_ENUM,
                     "description": "Domaine juridique pour filtrer (optionnel)",
                 },
                 "focus": {
@@ -141,7 +145,7 @@ TOOL_GENERER_RAPPORT = {
                 },
                 "domaine": {
                     "type": "string",
-                    "enum": ["travail", "foncier", "famille"],
+                    "enum": DOMAIN_ENUM,
                     "description": "Domaine juridique pour filtrer (optionnel)",
                 },
             },

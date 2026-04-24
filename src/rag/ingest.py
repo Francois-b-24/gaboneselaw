@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import re
 import sys
+from urllib.parse import urlparse
 from pathlib import Path
 
 import chromadb
@@ -33,7 +34,7 @@ from src.config import (
     WEB_SOURCES_FILE,
 )
 from src.rag.embeddings import E5EmbeddingFunction
-from src.rag.loaders import load_source, load_url
+from src.rag.loaders import discover_pdf_links, load_source, load_url, parse_pdf_url
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -134,6 +135,50 @@ def _ingest_web(collection) -> int:
         collection.add(ids=ids, documents=documents, metadatas=metadatas)
         total += len(chunks)
         print(f"[ok] {url} : {len(chunks)} chunks indexés")
+
+        # Optionnel: crawler le site et indexer les PDFs détectés.
+        if entry.get("discover_pdfs") is True:
+            max_pages = int(entry.get("crawl_max_pages", 20))
+            max_pdfs = int(entry.get("crawl_max_pdfs", 30))
+            max_depth = int(entry.get("crawl_max_depth", 2))
+            pdf_urls = discover_pdf_links(
+                url,
+                max_pages=max_pages,
+                max_pdfs=max_pdfs,
+                max_depth=max_depth,
+            )
+            if not pdf_urls:
+                print(f"[info] {url} : aucun PDF détecté via crawl")
+                continue
+
+            for pdf_url in pdf_urls:
+                pdf_chunks = parse_pdf_url(pdf_url)
+                if not pdf_chunks:
+                    print(f"[skip] {pdf_url} : PDF vide/inaccessible")
+                    continue
+
+                file_name = Path(urlparse(pdf_url).path).name or "document.pdf"
+                stem = _slugify(pdf_url)[:60]
+                ids = [f"webpdf-{stem}-{i}" for i in range(len(pdf_chunks))]
+                documents = [c["text"] for c in pdf_chunks]
+                metadatas = [
+                    {
+                        "domaine": domaine_key,
+                        "domaine_label": domaine_meta["label"],
+                        "source": source_label,
+                        "url": pdf_url,
+                        "title": file_name,
+                        "scraped_at": "",
+                        "article": f"page {c.get('page', '?')}",
+                        "page": c.get("page"),
+                        "file": file_name,
+                        "source_type": "pdf",
+                    }
+                    for c in pdf_chunks
+                ]
+                collection.add(ids=ids, documents=documents, metadatas=metadatas)
+                total += len(pdf_chunks)
+                print(f"[ok] {pdf_url} : {len(pdf_chunks)} chunks PDF indexés")
     return total
 
 

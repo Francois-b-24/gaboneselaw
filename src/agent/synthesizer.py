@@ -12,18 +12,18 @@ from src.agent.prompts import (
 )
 
 if TYPE_CHECKING:
-    from src.agent.llm import GroqLLM
+    from src.agent.llm import AnthropicLLM
     from src.rag.retriever import LegalChunk
 
 
-def _collect_stream(llm: "GroqLLM", messages: list[dict]) -> str:
+def _collect_stream(llm: "AnthropicLLM", messages: list[dict]) -> str:
     return "".join(llm.stream(messages, temperature=0.2, max_tokens=2048))
 
 
 def synthese_document(
     chunks: list["LegalChunk"],
     focus: str | None,
-    llm: "GroqLLM",
+    llm: "AnthropicLLM",
 ) -> str:
     """Produit une synthèse en bullets des extraits fournis.
 
@@ -54,7 +54,7 @@ def synthese_document(
 def generer_rapport(
     sujet: str,
     chunks: list["LegalChunk"],
-    llm: "GroqLLM",
+    llm: "AnthropicLLM",
 ) -> str:
     """Génère un rapport structuré en markdown sur ``sujet``."""
     if not chunks:

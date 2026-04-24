@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Role de l'outil — Info Juridique Citoyenne</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">Info Juridique Citoyenne</div>
+        <nav class="top-nav">
+          <a class="nav-link" href="/">Assistant</a>
+          <a class="nav-link active" href="/outil">Role et fonctionnalites</a>
+          <a class="nav-link" href="/admin">Admin</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container page-wrap">
+      <section class="page-hero">
+        <div class="badge">Plateforme IA juridique agentique</div>
+        <h1>Quel est le role de cet outil ?</h1>
+        <p class="subtitle">
+          Cette plateforme rend le droit gabonais plus accessible aux citoyens, aux entreprises et aux
+          equipes juridiques, avec un assistant conversationnel base sur un corpus de references.
+        </p>
+      </section>
+
+      <section class="feature-grid">
+        <article class="panel feature-card">
+          <h2>1) Repondre aux questions juridiques</h2>
+          <p>
+            L'agent repond en francais a partir des PDF de reference et des sources web scrapees, en
+            citant les extraits utilises et le niveau de pertinence.
+          </p>
+        </article>
+        <article class="panel feature-card">
+          <h2>2) Produire des syntheses fiables</h2>
+          <p>
+            A partir des extraits recuperes, l'outil genere une synthese claire des points juridiques
+            essentiels, utile pour une comprehension rapide des regles.
+          </p>
+        </article>
+        <article class="panel feature-card">
+          <h2>3) Generer des rapports juridiques</h2>
+          <p>
+            La plateforme redige des rapports structures (contexte, cadre, points cles, demarches),
+            exportables en markdown et PDF.
+          </p>
+        </article>
+      </section>
+
+      <section class="panel architecture">
+        <h2>Infrastructure technique (niveau LLM moderne)</h2>
+        <ul>
+          <li>Architecture RAG agentique avec boucle outils et appels fonctions.</li>
+          <li>Recherche semantique sur ChromaDB, corpus PDF + web, filtre par domaine.</li>
+          <li>Streaming de reponse pour une experience fluide et faible latence percue.</li>
+          <li>Mecanismes de robustesse: fallback modele, fallback sources, indexation auto.</li>
+          <li>API FastAPI et interface web ergonomique optimisee desktop/mobile.</li>
+        </ul>
+      </section>
+
+      <section class="panel architecture">
+        <h2>Perimetre et responsabilite</h2>
+        <p>
+          L'outil fournit une information juridique generale. Il ne remplace pas un avis juridique
+          personnalise d'un avocat ou d'un professionnel du droit.
+        </p>
+      </section>
+
+      <section class="panel architecture">
+        <h2>Verification du moteur LLM</h2>
+        <p>
+          Lancez un diagnostic pour verifier automatiquement le corpus, la recherche sur le domaine
+          travail, le format de citation et l'avertissement juridique final.
+        </p>
+        <button id="runDiagnosticsBtn" type="button">Lancer le diagnostic LLM</button>
+        <pre id="diagnosticsOutput" class="diagnostics-output hidden"></pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>Info Juridique Citoyenne - Gabon</span>
+        <span>Information generale uniquement - consultez un professionnel pour votre cas</span>
+      </div>
+    </footer>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

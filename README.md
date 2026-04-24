@@ -1,117 +1,120 @@
-# Agent "Info Juridique Citoyenne" — Gabon
+# Info Juridique Citoyenne - Gabon
 
-Agent de vulgarisation du droit gabonais (travail, foncier, famille) construit avec **Streamlit**, **Groq (Mistral)** et **ChromaDB** (RAG).
+Assistant juridique de vulgarisation sur le droit gabonais (travail, foncier, famille), base RAG ChromaDB, generation avec Claude via Anthropic.
 
-L'objectif est de rendre le droit gabonais plus accessible aux citoyens en répondant à leurs questions en langage simple, avec les références aux textes de loi.
+> ⚠️ Cet outil fournit une information juridique generale et ne remplace pas un conseil juridique personnalise.
 
-> ⚠️ **Avertissement légal** : cet agent fournit des informations juridiques à titre éducatif uniquement. Il ne remplace **en aucun cas** la consultation d'un avocat ou d'un professionnel du droit.
+## Stack actuelle
 
----
+- Backend: FastAPI (`webapp/main.py`) + pipeline RAG Python (`src/`)
+- Frontend principal: Next.js App Router (`webapp/frontend/`)
+- UI legacy: Streamlit (`app.py`) et pages HTML FastAPI (`webapp/templates/`)
+- LLM: Anthropic (`claude-sonnet-4-6` + fallback `claude-haiku-4-5`)
+- Vector DB: ChromaDB
+- Session/rate limiting prod: Redis (optionnel en local, recommande en production)
 
-## Architecture
+## Structure utile
 
-- **LLM** : Mistral via [Groq](https://groq.com/) (streaming)
-- **RAG** : ChromaDB + embeddings multilingues (`intfloat/multilingual-e5-base`)
-- **UI** : Streamlit (chat, citations, historique, filtre par domaine, upload PDF à la volée, synthèse/rapport)
-- **Corpus** : PDFs officiels (`data/pdfs/`) + pages web (`data/web_sources.yaml`)
-
-```
+```text
 first/
-├── app.py                    # UI Streamlit
-├── src/
-│   ├── config.py
-│   ├── rag/                  # Ingestion, loaders (PDF/Web), retriever Chroma
-│   └── agent/                # Prompts, client Groq, tools, synthesizer
-└── data/
-    ├── pdfs/
-    │   ├── manifest.yaml     # Mapping fichier → domaine + source
-    │   └── *.pdf
-    └── web_sources.yaml      # URLs à scraper
+├── app.py                      # UI Streamlit (legacy)
+├── src/                        # Agent + RAG (shared)
+├── data/                       # Corpus PDF + web sources
+├── webapp/
+│   ├── main.py                 # Backend FastAPI (API + SSE + CORS)
+│   ├── templates/              # UI HTML legacy
+│   ├── static/
+│   └── frontend/               # Next.js App Router (nouveau frontend)
+└── requirements.txt
 ```
 
----
-
-## Installation
+## Installation locale
 
 ```bash
 python -m venv venv
-source venv/bin/activate       # (Linux/Mac)
+source venv/bin/activate
 pip install -r requirements.txt
-```
-
-## Configuration
-
-1. Créer un compte sur https://console.groq.com et récupérer une clé API.
-2. Copier `.env.example` vers `.env` et renseigner `GROQ_API_KEY`.
-
-```bash
 cp .env.example .env
-# éditer .env
 ```
 
-## Ingestion du corpus
+Variables minimales dans `.env`:
+
+- `ANTHROPIC_API_KEY`
+- `FRONTEND_ORIGINS` (ex: `http://localhost:3000`)
+
+Variables recommandees en prod:
+
+- `REDIS_URL` (sessions + rate limiting distribues)
+- `ANTHROPIC_MODEL` (defaut: `claude-sonnet-4-6`)
+- `ANTHROPIC_MODEL_FALLBACK` (defaut: `claude-haiku-4-5`)
+
+## Ingestion du corpus RAG
 
 ```bash
 python -m src.rag.ingest
 ```
 
-Cette commande :
-1. Parcourt `data/pdfs/*.pdf` et indexe ceux qui ont une entrée dans `manifest.yaml`.
-2. Scrape les URLs listées dans `data/web_sources.yaml`.
-3. Crée les embeddings et les persiste dans `chroma_db/`.
+Cette commande recree la collection Chroma (`droit_gabonais`) puis:
 
-La collection est **recréée à chaque run** (idempotent et destructif).
+- indexe les PDFs declares dans `data/pdfs/manifest.yaml`
+- scrape les URLs declarees dans `data/web_sources.yaml`
 
-## Lancement de l'application
+## Lancer le backend FastAPI
 
 ```bash
-streamlit run app.py
+uvicorn webapp.main:app --reload --port 8000
 ```
 
-Ouvrir http://localhost:8501 dans votre navigateur.
+API principale:
 
----
+- `POST /api/chat` (non-streaming)
+- `POST /api/chat/stream` (SSE)
+- `POST /api/upload-pdf`
+- `POST /api/synthesis`
+- `POST /api/report`
 
-## Enrichir le corpus
+## Lancer le frontend Next.js
+
+```bash
+cd webapp/frontend
+cp .env.local.example .env.local
+npm install
+npm run dev
+```
+
+Puis ouvrir `http://localhost:3000`.
+
+## Deploiement recommande
+
+### Frontend (Vercel)
+
+- Projet racine: `webapp/frontend`
+- Variable env:
+  - `NEXT_PUBLIC_API_BASE_URL=https://<votre-backend>`
+
+### Backend (Render / Railway / Fly.io)
+
+- Commande start: `uvicorn webapp.main:app --host 0.0.0.0 --port $PORT`
+- Variables env:
+  - `ANTHROPIC_API_KEY=...`
+  - `FRONTEND_ORIGINS=https://<votre-frontend-vercel>`
+  - `REDIS_URL=rediss://...` (Upstash/Redis Cloud conseille)
+
+### Redis (managé)
+
+- Utilise un plan managé (Upstash, Redis Cloud, etc.)
+- Le backend bascule en mode memoire si Redis est absent, mais ce mode n'est pas adapte au multi-instance.
+
+## Enrichir les sources
 
 ### Ajouter un PDF permanent
 
-1. Déposer le fichier dans `data/pdfs/`.
-2. Ajouter une entrée dans `data/pdfs/manifest.yaml` :
+1. Deposer le fichier dans `data/pdfs/`
+2. Ajouter son entree dans `data/pdfs/manifest.yaml`
+3. Relancer `python -m src.rag.ingest`
 
-   ```yaml
-   - file: mon-document.pdf
-     domaine: travail          # travail | foncier | famille
-     source: "Libellé humain affiché dans les sources citées"
-   ```
+### Ajouter une source web
 
-3. Relancer `python -m src.rag.ingest`.
-
-Un PDF sans entrée de manifest est ignoré à l'ingestion.
-
-### Ajouter une URL
-
-1. Éditer `data/web_sources.yaml` et ajouter :
-
-   ```yaml
-   - url: https://example.ga/page-juridique
-     domaine: travail
-     source: "Nom lisible de la page"
-   ```
-
-2. Vérifier que le site autorise le scraping (robots.txt, CGU).
-3. Relancer `python -m src.rag.ingest`.
-
-Le loader web extrait uniquement du **HTML** — pour une URL qui pointe vers un PDF, télécharger le fichier localement et le placer dans `data/pdfs/`.
-
-### Analyser un PDF ponctuel depuis l'UI
-
-Dans la sidebar Streamlit, utiliser le bouton **« Analyser un document »** pour uploader un PDF. Il est indexé dans une collection séparée, fusionné avec les résultats de recherche pendant la session, et libéré au prochain chargement.
-
----
-
-## Scénarios d'exemple
-
-- *Droit du travail* : « Mon patron m'a licencié sans préavis, ai-je droit à une indemnité ? »
-- *Droit foncier* : « Mon village possède une terre coutumière, comment obtenir un titre foncier ? »
-- *Droit de la famille* : « Après un divorce, qui obtient la garde des enfants ? »
+1. Ajouter une entree dans `data/web_sources.yaml`
+2. Verifier robots.txt/CGU
+3. Relancer `python -m src.rag.ingest`

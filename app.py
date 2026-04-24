@@ -11,7 +11,7 @@ import streamlit as st
 
 from src.agent.agent import LegalAgent
 from src.agent.synthesizer import generer_rapport, markdown_to_pdf, synthese_document
-from src.config import CHROMA_PATH, DOMAINES, GROQ_API_KEY, TOP_K
+from src.config import ANTHROPIC_API_KEY, CHROMA_PATH, DOMAINES, TOP_K
 from src.rag.retriever import LegalChunk
 from src.rag.upload_indexer import clear_upload_collection, index_uploaded_pdf
 
@@ -346,10 +346,10 @@ def get_agent() -> LegalAgent:
 
 def ensure_prerequisites() -> bool:
     """Vérifie la présence de la clé API et de la base vectorielle."""
-    if not GROQ_API_KEY:
+    if not ANTHROPIC_API_KEY:
         st.error(
-            "**Clé API Groq manquante.** Copiez `.env.example` vers `.env` et "
-            "renseignez votre `GROQ_API_KEY` (https://console.groq.com/keys)."
+            "**Clé API Anthropic manquante.** Copiez `.env.example` vers `.env` et "
+            "renseignez votre `ANTHROPIC_API_KEY` (https://console.anthropic.com/)."
         )
         return False
     if not Path(CHROMA_PATH).exists():

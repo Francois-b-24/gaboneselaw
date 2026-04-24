@@ -10,7 +10,7 @@ from src.agent.synthesizer import generer_rapport, synthese_document
 from src.rag.retriever import LegalChunk, LegalRetriever
 
 if TYPE_CHECKING:
-    from src.agent.llm import GroqLLM
+    from src.agent.llm import AnthropicLLM
 
 
 def execute_tool(
@@ -18,7 +18,7 @@ def execute_tool(
     arguments: dict,
     retriever: LegalRetriever,
     domaine_hint: str | None = None,
-    llm: "GroqLLM | None" = None,
+    llm: "AnthropicLLM | None" = None,
     include_uploads: bool = False,
 ) -> tuple[str, list[LegalChunk]]:
     """Exécute un outil et retourne (texte résultat, chunks juridiques trouvés).
@@ -27,7 +27,7 @@ def execute_tool(
     :param arguments: arguments parsés (dict) de l'appel
     :param retriever: instance du retriever ChromaDB
     :param domaine_hint: domaine sélectionné par l'utilisateur (hint)
-    :param llm: client Groq (requis pour synthese_document et generer_rapport)
+    :param llm: client Anthropic (requis pour synthese_document et generer_rapport)
     :param include_uploads: fusionne la collection d'uploads dans les recherches
     """
     if tool_name == "recherche_juridique":
@@ -86,7 +86,7 @@ def _exec_synthese(
     args: dict,
     retriever: LegalRetriever,
     domaine_hint: str | None,
-    llm: "GroqLLM | None",
+    llm: "AnthropicLLM | None",
     include_uploads: bool,
 ) -> tuple[str, list[LegalChunk]]:
     if llm is None:
@@ -104,7 +104,7 @@ def _exec_rapport(
     args: dict,
     retriever: LegalRetriever,
     domaine_hint: str | None,
-    llm: "GroqLLM | None",
+    llm: "AnthropicLLM | None",
     include_uploads: bool,
 ) -> tuple[str, list[LegalChunk]]:
     if llm is None:

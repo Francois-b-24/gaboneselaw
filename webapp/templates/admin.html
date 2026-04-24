@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Info Juridique Citoyenne</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">Info Juridique Citoyenne</div>
+        <nav class="top-nav">
+          <a class="nav-link" href="/">Assistant</a>
+          <a class="nav-link" href="/outil">Role et fonctionnalites</a>
+          <a class="nav-link active" href="/admin">Admin</a>
+        </nav>
+      </div>
+    </header>
+    <main class="container page-wrap">
+      <section class="panel">
+        <h1>Tableau de bord</h1>
+        <div class="admin-metrics">
+          <article class="metric"><strong>{{ metrics.total_requests }}</strong><span>Requetes</span></article>
+          <article class="metric"><strong>{{ metrics.avg_latency_ms }} ms</strong><span>Latence moyenne</span></article>
+          <article class="metric"><strong>{{ metrics.citation_rate }}%</strong><span>Taux de citation</span></article>
+          <article class="metric"><strong>{{ metrics.error_count }}</strong><span>Erreurs</span></article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Outils les plus utilises</h2>
+        <div class="tool-list">
+          {% for name, count in metrics.top_tools.items() %}
+          <span class="tool-badge">{{ tool_labels.get(name, name) }}: {{ count }}</span>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Derniers evenements</h2>
+        <pre class="diagnostics-output">{% for e in events %}{{ e }}
+
+{% endfor %}</pre>
+      </section>
+    </main>
+  </body>
+</html>

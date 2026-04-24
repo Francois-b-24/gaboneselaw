@@ -18,13 +18,15 @@ from pathlib import Path
 
 from src.rag.loaders.pdf_loader import parse_pdf
 from src.rag.loaders.splitter import split_by_chars
-from src.rag.loaders.web_loader import parse_web
+from src.rag.loaders.web_loader import discover_pdf_links, parse_pdf_url, parse_web
 
 __all__ = [
     "load_source",
     "load_url",
     "parse_pdf",
+    "parse_pdf_url",
     "parse_web",
+    "discover_pdf_links",
     "split_by_chars",
     "source_type_from_path",
 ]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Iterator
 
-from src.agent.llm import GroqLLM
+from src.agent.llm import AnthropicLLM
 from src.agent.prompts import SYSTEM_PROMPT, build_user_message
 from src.agent.response import AgentResponse
 from src.agent.tool_executor import execute_tool
@@ -19,7 +19,7 @@ class LegalAgent:
 
     def __init__(self) -> None:
         self.retriever = LegalRetriever()
-        self.llm = GroqLLM()
+        self.llm = AnthropicLLM()
 
     def answer(
         self,
@@ -43,10 +43,16 @@ class LegalAgent:
 
         messages.append({"role": "user", "content": build_user_message(question, domaine)})
 
-        def _generate(sources_collector: list[LegalChunk]) -> Iterator[str]:
-            yield from self._agent_loop(messages, domaine, sources_collector, include_uploads)
-
-        return AgentResponse(_generate)
+        response = AgentResponse(
+            lambda sources_collector: self._agent_loop(
+                messages,
+                domaine,
+                sources_collector,
+                include_uploads,
+                response.tools_used,
+            )
+        )
+        return response
 
     def _agent_loop(
         self,
@@ -54,6 +60,7 @@ class LegalAgent:
         domaine_hint: str | None,
         sources_collector: list[LegalChunk],
         include_uploads: bool = False,
+        tools_used_collector: list[str] | None = None,
     ) -> Iterator[str]:
         """Boucle agent : stream → detect tool_calls → execute → loop."""
         for _ in range(MAX_AGENT_ITERATIONS):
@@ -116,13 +123,16 @@ class LegalAgent:
 
             # Exécuter chaque outil et ajouter les résultats
             for tc_data in sorted(tool_calls_buf.values(), key=lambda x: x.get("id", "")):
+                tool_name = tc_data.get("name") or "outil_inconnu"
+                if tools_used_collector is not None and tool_name not in tools_used_collector:
+                    tools_used_collector.append(tool_name)
                 try:
                     args = json.loads(tc_data["arguments"])
                 except json.JSONDecodeError:
                     args = {}
 
                 result_text, chunks = execute_tool(
-                    tc_data["name"],
+                    tool_name,
                     args,
                     self.retriever,
                     domaine_hint=domaine_hint,

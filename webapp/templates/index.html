@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Info Juridique Citoyenne — Gabon</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar-inner">
+        <div class="brand">Info Juridique Citoyenne</div>
+        <nav class="top-nav">
+          <a class="nav-link active" href="/">Assistant</a>
+          <a class="nav-link" href="/outil">Role et fonctionnalites</a>
+          <a class="nav-link" href="/admin">Admin</a>
+        </nav>
+      </div>
+    </header>
+
+    <header class="hero">
+      <div class="container hero-card">
+        <div class="badge">Republique gabonaise - Information juridique</div>
+        <h1>Assistant juridique professionnel</h1>
+        <p class="subtitle">
+          Plateforme de vulgarisation du droit gabonais (travail, foncier, famille), avec citations de sources.
+        </p>
+        <div class="trust-grid">
+          <article class="trust-item">
+            <strong>Sources juridiques</strong>
+            <span>Chaque reponse s'appuie sur le corpus indexe.</span>
+          </article>
+          <article class="trust-item">
+            <strong>Traite le droit du travail</strong>
+            <span>Licenciement, preavis, conges, indemnites.</span>
+          </article>
+          <article class="trust-item">
+            <strong>Rapports exportables</strong>
+            <span>Synthese, rapport markdown et PDF.</span>
+          </article>
+        </div>
+      </div>
+    </header>
+
+    <main class="container grid">
+      <section class="panel controls">
+        <h2>Parametres</h2>
+        <div id="statusBanner" class="status-banner">
+          <div class="status-label">Etat du systeme</div>
+          <div id="statusPill" class="status-pill">Pret</div>
+          <div id="statusDetails" class="status-details">
+            Le systeme est disponible. Vous pouvez poser une question.
+          </div>
+        </div>
+        <label for="domaine">Filtrer par domaine</label>
+        <select id="domaine">
+          {% for d in domaines %}
+          <option value="{{ d.value }}">{{ d.label }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="pdfUpload">Analyser un document PDF</label>
+        <input id="pdfUpload" type="file" accept="application/pdf" />
+        <div id="uploadStatus" class="hint">Aucun document uploadé.</div>
+        <div class="upload-explain">
+          Apres indexation, votre document est converti en extraits juridiques et integre temporairement
+          au moteur de recherche de la session. Les reponses, syntheses et rapports peuvent alors
+          exploiter ce contenu en plus du corpus legal principal.
+        </div>
+
+        <hr />
+        <h3 class="mini-title">Questions frequentes</h3>
+        <div id="sampleList" class="sample-list">
+          <button class="sample-btn" type="button" data-question="Chargement des questions frequentes...">Chargement...</button>
+        </div>
+
+        <div class="disclaimer">
+          Cet agent fournit des informations juridiques generales a titre educatif.
+          Il ne remplace pas la consultation d'un professionnel du droit.
+        </div>
+      </section>
+
+      <section class="panel chat-panel">
+        <div class="chat-head">
+          <h2>Conversation</h2>
+          <div class="chat-head-actions">
+            <div class="chat-chip">Assistant juridique agentique</div>
+            <button id="clearChatBtn" type="button" class="clear-chat-btn">Supprimer les messages</button>
+          </div>
+        </div>
+        <section id="chatWelcome" class="chat-welcome">
+          <h3>Bienvenue sur la plateforme</h3>
+          <p>
+            Posez une question en droit gabonais. L'assistant recherche les sources, cite les references et
+            peut produire une synthese ou un rapport juridique structure.
+          </p>
+          <div class="welcome-cards">
+            <article><strong>Questions juridiques</strong><span>Travail, foncier, famille.</span></article>
+            <article><strong>Synthese automatique</strong><span>Vue claire des points essentiels.</span></article>
+            <article><strong>Rapport PDF</strong><span>Document exportable pour usage terrain.</span></article>
+          </div>
+        </section>
+        <div id="chat" class="chat"></div>
+        <form id="chatForm" class="chat-form">
+          <textarea
+            id="question"
+            rows="2"
+            placeholder="Posez votre question juridique..."
+            required
+          ></textarea>
+          <button id="sendBtn" type="submit">Envoyer la question</button>
+        </form>
+
+        <div id="actions" class="actions hidden">
+          <button id="synthBtn" type="button">Synthese des sources</button>
+          <button id="reportBtn" type="button">Generer un rapport</button>
+          <button id="pdfBtn" type="button">Telecharger rapport PDF</button>
+        </div>
+
+        <section id="toolsPanel" class="tools-panel hidden">
+          <h3>Outils utilises pour cette requete</h3>
+          <div id="toolsUsed" class="tool-list"></div>
+        </section>
+        <section id="confidencePanel" class="tools-panel hidden">
+          <h3>Rapport de confiance</h3>
+          <div id="confidenceStats" class="confidence-stats"></div>
+        </section>
+
+        <section id="extraOutput" class="extra-output hidden"></section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>Info Juridique Citoyenne - Gabon</span>
+        <span>Information generale uniquement - consultez un professionnel pour votre cas</span>
+      </div>
+    </footer>
+
+    <template id="messageTpl">
+      <article class="message">
+        <div class="role"></div>
+        <div class="content"></div>
+      </article>
+    </template>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

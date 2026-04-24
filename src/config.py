@@ -16,12 +16,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-# --- Groq / LLM ---
-GROQ_API_KEY: str | None = os.getenv("GROQ_API_KEY")
-# Modèle principal Mistral sur Groq. La liste des modèles Groq évolue — en
-# cas d'erreur 404/modèle indisponible au runtime, on bascule sur le fallback.
-GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-GROQ_MODEL_FALLBACK: str = "llama-3.1-8b-instant"
+# --- Anthropic / LLM ---
+ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
+# Modèle principal recommandé pour le chat juridique en production.
+ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+# Fallback économique en cas d'indisponibilité/erreur du modèle principal.
+ANTHROPIC_MODEL_FALLBACK: str = os.getenv("ANTHROPIC_MODEL_FALLBACK", "claude-haiku-4-5")
 
 # --- Embeddings ---
 EMBEDDING_MODEL: str = "intfloat/multilingual-e5-base"
@@ -43,6 +43,12 @@ TOP_K: int = 5
 CHUNK_MAX_CHARS: int = 1200  # taille max d'un chunk avant re-split
 MAX_AGENT_ITERATIONS: int = 5  # nombre max de tours outil dans la boucle agent
 
+# --- Infra (production) ---
+# URL Redis (ex: redis://localhost:6379/0 ou rediss://... pour service managé).
+REDIS_URL: str | None = os.getenv("REDIS_URL")
+# Origines CORS autorisées pour le backend web (CSV).
+FRONTEND_ORIGINS: str = os.getenv("FRONTEND_ORIGINS", "http://localhost:3000")
+
 # Mapping nom de fichier (sans extension) -> (libellé domaine, source humaine)
 DOMAINES: dict[str, dict[str, str]] = {
     "travail": {
@@ -56,5 +62,25 @@ DOMAINES: dict[str, dict[str, str]] = {
     "famille": {
         "label": "Droit de la famille",
         "source": "Code civil gabonais",
+    },
+    "commercial": {
+        "label": "Droit commercial",
+        "source": "Actes uniformes OHADA et textes commerciaux gabonais",
+    },
+    "administratif": {
+        "label": "Droit administratif",
+        "source": "Textes administratifs gabonais",
+    },
+    "penal": {
+        "label": "Droit pénal",
+        "source": "Code pénal gabonais",
+    },
+    "fiscal": {
+        "label": "Droit fiscal",
+        "source": "Code général des impôts du Gabon",
+    },
+    "numerique": {
+        "label": "Droit du numérique",
+        "source": "Textes gabonais sur le numérique et les données",
     },
 }
