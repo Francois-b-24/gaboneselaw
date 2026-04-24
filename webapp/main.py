@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import threading
 import time
 import uuid
 from collections import Counter, defaultdict, deque
@@ -546,10 +547,24 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
+def _bootstrap_runtime() -> None:
+    """Prépare le runtime RAG sans bloquer le boot HTTP.
+
+    En production (Render), le chargement embeddings + ingestion initiale peut
+    prendre plus de temps que le délai de détection de port. On lance donc ce
+    bootstrap en arrière-plan pour laisser Uvicorn ouvrir son port rapidement.
+    """
+    try:
+        _ensure_prerequisites()
+        get_agent()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[startup] bootstrap différé en échec: {exc}")
+
+
 @app.on_event("startup")
 def on_startup() -> None:
-    _ensure_prerequisites()
-    get_agent()
+    thread = threading.Thread(target=_bootstrap_runtime, daemon=True)
+    thread.start()
 
 
 @app.get("/", response_class=HTMLResponse)
