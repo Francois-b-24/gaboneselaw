@@ -23,11 +23,10 @@ function HeaderBar({ pathname }: HeaderBarProps) {
   const activeTab = NAV_ITEMS.find((item) => item.href === pathname)?.label;
 
   return (
-    <div className="border-b" style={{ borderColor: "var(--border)" }}>
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-4">
+    <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-3 sm:h-16 sm:px-4">
         <Link
           href="/"
-          className="min-w-0 shrink pr-2 leading-tight no-underline hover:opacity-90"
+          className="min-w-0 shrink-0 pr-2 leading-tight no-underline hover:opacity-90"
         >
           <span className="block text-sm font-semibold tracking-wide text-[color:var(--foreground)]">
             ALIN
@@ -36,22 +35,19 @@ function HeaderBar({ pathname }: HeaderBarProps) {
             African Legal Innovation Network
           </span>
         </Link>
-      </div>
-      <div className="mx-auto w-full max-w-6xl px-2 pb-2 sm:px-4">
-        <div className="overflow-x-auto">
-          <div className="mx-auto w-max min-w-full">
-          <AnimatedTabs
-            tabs={NAV_ITEMS.map((item) => ({ label: item.label }))}
-            activeLabel={activeTab}
-            onChange={(label) => {
-              const item = NAV_ITEMS.find((navItem) => navItem.label === label);
-              if (!item) return;
-              router.push(item.href);
-            }}
-          />
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <div className="flex w-max min-w-full justify-end">
+            <AnimatedTabs
+              tabs={NAV_ITEMS.map((item) => ({ label: item.label }))}
+              activeLabel={activeTab}
+              onChange={(label) => {
+                const item = NAV_ITEMS.find((navItem) => navItem.label === label);
+                if (!item) return;
+                router.push(item.href);
+              }}
+            />
           </div>
         </div>
-      </div>
     </div>
   );
 }

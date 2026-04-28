@@ -19,7 +19,7 @@ export function AnimatedTabs({ tabs, activeLabel, onChange }: AnimatedTabsProps)
   };
 
   return (
-    <div className="mx-auto flex w-fit items-center rounded-full border border-primary/10 bg-secondary/50 p-1.5">
+    <div className="flex w-fit items-center rounded-full border border-primary/10 bg-secondary/50 p-1.5">
       {tabs.map(({ label }, index) => {
         const isActive = activeTab === label;
         return (
