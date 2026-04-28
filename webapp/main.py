@@ -11,7 +11,7 @@ from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import chromadb
 from redis import Redis
@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from starlette.requests import Request
 
 from src.agent.agent import LegalAgent
+from src.agent.pedagogy import PedagogyService
 from src.agent.synthesizer import generer_rapport, markdown_to_pdf, synthese_document
 from src.config import (
     ANTHROPIC_API_KEY,
@@ -92,6 +93,88 @@ class ReportRequest(BaseModel):
 
 class SessionClearRequest(BaseModel):
     session_id: str | None = None
+
+
+class LessonRequest(BaseModel):
+    topic: str = Field(min_length=3, max_length=240)
+    domaine: str | None = None
+    level: Literal["intro", "intermediate", "advanced"] = "intro"
+    include_uploads: bool = False
+
+
+class LessonResponse(BaseModel):
+    topic: str
+    domaine: str | None = None
+    level: Literal["intro", "intermediate", "advanced"]
+    lesson: str
+    sources: list[dict[str, Any]]
+    source_stats: dict[str, Any]
+    metadata: dict[str, Any]
+
+
+class ExerciseRequest(BaseModel):
+    topic: str = Field(min_length=3, max_length=240)
+    domaine: str | None = None
+    format: Literal["qcm"] = "qcm"
+    count: int = Field(default=3, ge=1, le=10)
+    include_uploads: bool = False
+
+
+class ExerciseQuestion(BaseModel):
+    id: str
+    prompt: str
+    options: list[str]
+    correct_option: int
+    explanation: str
+
+
+class ExercisePayload(BaseModel):
+    exercise_id: str
+    title: str
+    context: str
+    questions: list[ExerciseQuestion]
+
+
+class ExerciseResponse(BaseModel):
+    topic: str
+    domaine: str | None = None
+    format: Literal["qcm"]
+    exercise: ExercisePayload
+    sources: list[dict[str, Any]]
+    source_stats: dict[str, Any]
+    metadata: dict[str, Any]
+
+
+class CorrectionAnswer(BaseModel):
+    question_id: str
+    selected_option: int | None = None
+
+
+class CorrectionRequest(BaseModel):
+    exercise_id: str = Field(min_length=1, max_length=120)
+    topic: str = Field(min_length=3, max_length=240)
+    domaine: str | None = None
+    answers: list[CorrectionAnswer] = Field(default_factory=list, max_length=30)
+    include_uploads: bool = False
+
+
+class CorrectionFeedback(BaseModel):
+    question_id: str
+    selected_option: int | None = None
+    expected_option: int
+    is_correct: bool
+    explanation: str
+
+
+class CorrectionResponse(BaseModel):
+    exercise_id: str
+    score: int
+    total: int
+    feedback: list[CorrectionFeedback]
+    revision_tips: list[str]
+    sources: list[dict[str, Any]]
+    source_stats: dict[str, Any]
+    metadata: dict[str, Any]
 
 
 def _source_badge_type(chunk: LegalChunk) -> str:
@@ -335,6 +418,12 @@ def get_agent() -> LegalAgent:
     except Exception:
         pass
     return agent
+
+
+@lru_cache(maxsize=1)
+def get_pedagogy_service() -> PedagogyService:
+    agent = get_agent()
+    return PedagogyService(retriever=agent.retriever, llm=agent.llm)
 
 
 def _ensure_prerequisites() -> None:
@@ -681,6 +770,144 @@ def api_chat(payload: ChatRequest, request: Request) -> dict[str, Any]:
             }
         )
         raise
+
+
+@app.post("/api/lesson", response_model=LessonResponse)
+def api_lesson(payload: LessonRequest, request: Request) -> LessonResponse:
+    _check_rate_limit(request, "pedagogy")
+    started = time.time()
+    service = get_pedagogy_service()
+    try:
+        result = service.build_lesson(
+            topic=payload.topic,
+            domaine=payload.domaine,
+            level=payload.level,
+            include_uploads=payload.include_uploads,
+        )
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/lesson",
+                "status": "ok",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "lesson",
+                "source_count": result["source_stats"]["count"],
+                "has_citation": "[Source :" in result["lesson"],
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+            }
+        )
+        return LessonResponse.model_validate(result)
+    except Exception as exc:  # noqa: BLE001
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/lesson",
+                "status": "error",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "lesson",
+                "source_count": 0,
+                "has_citation": False,
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+                "error": str(exc),
+            }
+        )
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/exercise", response_model=ExerciseResponse)
+def api_exercise(payload: ExerciseRequest, request: Request) -> ExerciseResponse:
+    _check_rate_limit(request, "pedagogy")
+    started = time.time()
+    service = get_pedagogy_service()
+    try:
+        result = service.build_exercise(
+            topic=payload.topic,
+            domaine=payload.domaine,
+            count=payload.count,
+            include_uploads=payload.include_uploads,
+        )
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/exercise",
+                "status": "ok",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "exercise",
+                "source_count": result["source_stats"]["count"],
+                "question_count": len(result["exercise"]["questions"]),
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+            }
+        )
+        return ExerciseResponse.model_validate(result)
+    except Exception as exc:  # noqa: BLE001
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/exercise",
+                "status": "error",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "exercise",
+                "source_count": 0,
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+                "error": str(exc),
+            }
+        )
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/correction", response_model=CorrectionResponse)
+def api_correction(payload: CorrectionRequest, request: Request) -> CorrectionResponse:
+    _check_rate_limit(request, "pedagogy")
+    started = time.time()
+    service = get_pedagogy_service()
+    try:
+        result = service.build_correction(
+            exercise_id=payload.exercise_id,
+            topic=payload.topic,
+            domaine=payload.domaine,
+            answers=[item.model_dump() for item in payload.answers],
+            include_uploads=payload.include_uploads,
+        )
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/correction",
+                "status": "ok",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "correction",
+                "source_count": result["source_stats"]["count"],
+                "score": result["score"],
+                "total": result["total"],
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+            }
+        )
+        return CorrectionResponse.model_validate(result)
+    except Exception as exc:  # noqa: BLE001
+        _log_request(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "path": "/api/correction",
+                "status": "error",
+                "domaine": payload.domaine,
+                "question": payload.topic,
+                "module": "correction",
+                "source_count": 0,
+                "latency_ms": int((time.time() - started) * 1000),
+                "ip": request.client.host if request.client else "unknown",
+                "error": str(exc),
+            }
+        )
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.post("/api/chat/stream")

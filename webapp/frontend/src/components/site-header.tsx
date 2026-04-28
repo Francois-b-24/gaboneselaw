@@ -1,24 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimatedTabs } from "@/components/ui/animated-tabs";
 
 const NAV_ITEMS = [
-  { section: "accueil", label: "Accueil" },
-  { section: "enjeu", label: "Enjeu" },
-  { section: "methode", label: "Méthode" },
-  { section: "livrables", label: "Livrables" },
-  { section: "a-propos", label: "À propos" },
-  { section: "contact", label: "Contact" },
+  { href: "/enjeu", label: "Enjeu" },
+  { href: "/methode", label: "Méthode" },
+  { href: "/livrables", label: "Livrables" },
+  { href: "/a-propos", label: "À propos" },
+  { href: "/contact", label: "Contact" },
   { href: "/chatbot", label: "Chatbot" },
 ] as const;
-
-type NavItem = (typeof NAV_ITEMS)[number];
-
-function isLinkItem(item: NavItem): item is Extract<NavItem, { href: string }> {
-  return "href" in item;
-}
 
 function MenuIcon({ open }: { open: boolean }) {
   return (
@@ -48,7 +42,9 @@ type HeaderBarProps = {
 };
 
 function HeaderBar({ pathname }: HeaderBarProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const activeTab = NAV_ITEMS.find((item) => item.href === pathname)?.label;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -74,27 +70,17 @@ function HeaderBar({ pathname }: HeaderBarProps) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 md:flex md:gap-1">
-          {NAV_ITEMS.map((item) => {
-            const href = isLinkItem(item)
-              ? item.href
-              : `${pathname === "/" ? "" : "/"}#${item.section}`;
-            const active = isLinkItem(item) ? pathname === item.href : false;
-            return (
-              <Link
-                key={item.label}
-                href={href}
-                className={`rounded-md px-2.5 py-2 text-sm whitespace-nowrap transition lg:px-3 ${
-                  active
-                    ? "btn-primary"
-                    : "text-muted hover:text-[color:var(--foreground)]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="hidden md:block">
+          <AnimatedTabs
+            tabs={NAV_ITEMS.map((item) => ({ label: item.label }))}
+            activeLabel={activeTab}
+            onChange={(label) => {
+              const item = NAV_ITEMS.find((navItem) => navItem.label === label);
+              if (!item) return;
+              router.push(item.href);
+            }}
+          />
+        </div>
 
         <button
           type="button"
@@ -126,10 +112,8 @@ function HeaderBar({ pathname }: HeaderBarProps) {
           >
             <div className="mx-auto flex max-w-6xl flex-col gap-0.5 px-3 py-3 sm:px-4">
               {NAV_ITEMS.map((item) => {
-                const href = isLinkItem(item)
-                  ? item.href
-                  : `${pathname === "/" ? "" : "/"}#${item.section}`;
-                const active = isLinkItem(item) ? pathname === item.href : false;
+                const href = item.href;
+                const active = pathname === item.href;
                 return (
                   <Link
                     key={item.label}

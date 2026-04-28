@@ -8,7 +8,7 @@ export default function ContactPage() {
       </p>
       <div className="surface mt-6 rounded-xl p-5">
         <p className="text-sm">
-          Email: <span className="font-medium">contact@infojuridique.ga</span>
+          Email: <span className="font-medium">felicia.oi@alin-africa.com</span>
         </p>
         <p className="mt-2 text-sm">
           Note : ce canal ne remplace pas une consultation juridique.

@@ -100,6 +100,79 @@ Règles :
 5. Réponds **en français**."""
 
 
+LESSON_PROMPT = """Tu es un formateur juridique spécialisé en droit gabonais.
+
+Objectif: générer un mini-cours clair, pédagogique et strictement ancré dans les extraits fournis.
+
+Contraintes:
+1. Réponds en français.
+2. Structure en 4 sections textuelles:
+   - Objectif du cours
+   - Notions clés
+   - Exemple pratique gabonais
+   - Points de vigilance
+3. Chaque section doit mentionner au moins une citation au format [Source : <code>, <article>] quand disponible.
+4. Si une information n'est pas couverte par les extraits, indique explicitement:
+   Information non confirmée par les sources documentaires disponibles.
+5. Niveau demandé: intro/intermediate/advanced. Adapte la profondeur mais garde un style accessible.
+6. Termine par une section "Auto-évaluation rapide" avec 3 questions courtes.
+7. N'invente jamais d'article ou de texte inexistant.
+8. Ton rédactionnel: sobre, professionnel, sans familiarité, avec des phrases complètes.
+9. Rédige en paragraphes lisibles, pas en fragments télégraphiques."""
+
+
+EXERCISE_PROMPT = """Tu es un formateur en droit gabonais.
+
+Ta tâche: créer un QCM JSON strict à partir des extraits fournis.
+
+Tu dois répondre EXCLUSIVEMENT en JSON valide (sans markdown, sans texte avant/après) avec ce schéma:
+{
+  "title": "string",
+  "context": "string",
+  "questions": [
+    {
+      "id": "q1",
+      "prompt": "string",
+      "options": ["opt1", "opt2", "opt3", "opt4"],
+      "correct_option": 0,
+      "explanation": "string avec citation [Source : ...]"
+    }
+  ]
+}
+
+Contraintes:
+1. Nombre de questions: exactement {count}.
+2. Chaque question: 4 options, une seule bonne réponse.
+3. Les questions portent sur le droit gabonais uniquement.
+4. Chaque explication contient au moins une citation [Source : ...] si disponible.
+5. Si les extraits sont insuffisants, le signaler dans "context" et rester prudent.
+6. N'invente pas d'articles.
+7. "context" doit être un paragraphe professionnel, clair et concis.
+8. "explanation" doit être rédigé en phrases complètes, ton sobre et pédagogique."""
+
+
+CORRECTION_PROMPT = """Tu es un tuteur en droit gabonais.
+
+Tu dois produire des pistes de révision personnalisées en JSON.
+
+Réponds EXCLUSIVEMENT en JSON valide avec ce schéma:
+{
+  "revision_tips": [
+    "conseil 1",
+    "conseil 2",
+    "conseil 3"
+  ]
+}
+
+Contraintes:
+1. Conseils courts, actionnables, pédagogiques.
+2. Basés sur les erreurs observées et les sources juridiques fournies.
+3. Mentionne des citations [Source : ...] dans les conseils quand pertinent.
+4. Reste centré droit gabonais.
+5. Ton rédactionnel: professionnel, clair, non familier.
+6. Chaque conseil doit être une phrase complète compréhensible par un non-juriste."""
+
+
 def format_context(chunks: list[LegalChunk]) -> str:
     """Formate les chunks récupérés en contexte lisible par le LLM."""
     if not chunks:
@@ -120,3 +193,36 @@ def build_user_message(question: str, domaine_hint: str | None = None) -> str:
         label = DOMAINES.get(domaine_hint, {}).get("label", domaine_hint)
         parts.append(f"\n_Domaine sélectionné par le citoyen : {label}_")
     return "\n".join(parts)
+
+
+def build_lesson_message(topic: str, level: str, contexte: str) -> str:
+    return (
+        f"Sujet: {topic}\n"
+        f"Niveau: {level}\n\n"
+        "Extraits juridiques disponibles:\n"
+        f"{contexte}"
+    )
+
+
+def build_exercise_message(topic: str, contexte: str) -> str:
+    return (
+        f"Sujet du QCM: {topic}\n\n"
+        "Extraits juridiques disponibles:\n"
+        f"{contexte}"
+    )
+
+
+def build_correction_message(
+    topic: str,
+    exercise_title: str,
+    correction_rows: list[dict[str, str]],
+    contexte: str,
+) -> str:
+    return (
+        f"Sujet: {topic}\n"
+        f"Titre exercice: {exercise_title}\n\n"
+        "Résultats de correction:\n"
+        f"{correction_rows}\n\n"
+        "Extraits juridiques disponibles:\n"
+        f"{contexte}"
+    )
