@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 
 const NAV_ITEMS = [
+  { href: "/", label: "Accueil" },
   { href: "/enjeu", label: "Enjeu" },
   { href: "/methode", label: "Méthode" },
   { href: "/livrables", label: "Livrables" },
