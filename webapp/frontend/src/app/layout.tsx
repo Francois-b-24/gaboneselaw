@@ -17,6 +17,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ALIN - African Legal Innovation Network",
   description: "La transformation du Droit africain à l'ère du numérique.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
+    ],
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+  },
 };
 
 export default function RootLayout({

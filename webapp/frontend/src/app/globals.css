@@ -35,26 +35,26 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  /* Aligné sur la hauteur du header (h-14 sm:h-16) */
-  padding-top: 3.5rem;
+  /* Header en 2 lignes (marque + navigation) */
+  padding-top: 6.75rem;
   overflow-x: hidden;
 }
 
 @media (min-width: 640px) {
   body {
-    padding-top: 4rem;
+    padding-top: 7.25rem;
   }
 }
 
 html {
   scroll-behavior: smooth;
   /* Ancres (#accueil, etc.) : ne pas passer sous le header fixe */
-  scroll-padding-top: calc(3.5rem + 12px);
+  scroll-padding-top: calc(6.75rem + 12px);
 }
 
 @media (min-width: 640px) {
   html {
-    scroll-padding-top: calc(4rem + 12px);
+    scroll-padding-top: calc(7.25rem + 12px);
   }
 }
 
@@ -131,12 +131,12 @@ html {
 
 .apple-section {
   scroll-snap-align: start;
-  scroll-margin-top: calc(3.5rem + 12px);
+  scroll-margin-top: calc(6.75rem + 12px);
 }
 
 @media (min-width: 640px) {
   .apple-section {
-    scroll-margin-top: calc(4rem + 12px);
+    scroll-margin-top: calc(7.25rem + 12px);
   }
 }
 
