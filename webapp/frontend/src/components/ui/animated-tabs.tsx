@@ -26,12 +26,13 @@ export function AnimatedTabs({ tabs, activeLabel, onChange }: AnimatedTabsProps)
           <button
             key={index}
             onClick={() => handleSelect(label)}
-            className={`h-8 rounded-full px-3 text-sm font-medium transition-all duration-200 ${
+            className={`h-8 rounded-full px-3 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2 ${
               isActive
-                ? "bg-slate-900 text-white shadow-sm"
-                : "text-muted-foreground hover:bg-slate-900/10 hover:text-[color:var(--foreground)]"
+                ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] shadow-sm"
+                : "text-muted-foreground hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--foreground)]"
             }`}
             type="button"
+            aria-pressed={isActive}
           >
             {label}
           </button>

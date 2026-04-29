@@ -49,7 +49,7 @@ export default function RessourcesPage() {
           >
             <h2 className="text-lg font-medium">{item.title}</h2>
             <p className="text-muted mt-2 text-sm">{item.text}</p>
-            <p className="mt-3 text-xs text-amber-300">{item.level}</p>
+            <p className="mt-3 text-xs text-[color:var(--primary)]">{item.level}</p>
           </article>
         ))}
       </section>

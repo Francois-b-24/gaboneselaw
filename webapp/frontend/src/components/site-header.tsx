@@ -5,13 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatedTabs } from "@/components/ui/animated-tabs";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Accueil" },
-  { href: "/enjeu", label: "Enjeu" },
-  { href: "/methode", label: "Méthode" },
-  { href: "/livrables", label: "Livrables" },
-  { href: "/a-propos", label: "À propos" },
-  { href: "/contact", label: "Contact" },
+  { href: "/", label: "À propos" },
+  { href: "/manifeste", label: "Manifeste" },
+  { href: "/blog", label: "Blog" },
   { href: "/chatbot", label: "Chatbot" },
+  { href: "/contacts", label: "Contacts" },
 ] as const;
 
 type HeaderBarProps = {
@@ -20,7 +18,12 @@ type HeaderBarProps = {
 
 function HeaderBar({ pathname }: HeaderBarProps) {
   const router = useRouter();
-  const activeTab = NAV_ITEMS.find((item) => item.href === pathname)?.label;
+  const activeTab =
+    NAV_ITEMS.find((item) =>
+      item.href === "/"
+        ? pathname === "/"
+        : pathname === item.href || pathname.startsWith(`${item.href}/`)
+    )?.label;
 
   return (
     <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-3 sm:h-16 sm:px-4">
@@ -35,19 +38,19 @@ function HeaderBar({ pathname }: HeaderBarProps) {
             African Legal Innovation Network
           </span>
         </Link>
-        <div className="min-w-0 flex-1 overflow-x-auto">
+        <nav className="min-w-0 flex-1 overflow-x-auto" aria-label="Navigation principale">
           <div className="flex w-max min-w-full justify-end">
-            <AnimatedTabs
-              tabs={NAV_ITEMS.map((item) => ({ label: item.label }))}
-              activeLabel={activeTab}
-              onChange={(label) => {
-                const item = NAV_ITEMS.find((navItem) => navItem.label === label);
-                if (!item) return;
-                router.push(item.href);
-              }}
-            />
+              <AnimatedTabs
+                tabs={NAV_ITEMS.map((item) => ({ label: item.label }))}
+                activeLabel={activeTab}
+                onChange={(label) => {
+                  const item = NAV_ITEMS.find((navItem) => navItem.label === label);
+                  if (!item) return;
+                  router.push(item.href);
+                }}
+              />
           </div>
-        </div>
+        </nav>
     </div>
   );
 }

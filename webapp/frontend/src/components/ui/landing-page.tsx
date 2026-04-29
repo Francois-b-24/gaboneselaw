@@ -21,6 +21,8 @@ type LandingSection = {
   title: string;
   subtitle?: string;
   description: string;
+  paragraphs?: string[];
+  backgroundImage?: string;
   align?: "left" | "center" | "right";
   features?: SectionFeature[];
   actions?: SectionAction[];
@@ -238,6 +240,25 @@ function ScrollGlobe({
               <p className="mb-3 sm:mb-4">{section.description}</p>
             </div>
 
+            {!!section.paragraphs?.length && (
+              <div
+                className="mb-8 space-y-4 rounded-xl border border-slate-300/25 bg-slate-950/45 p-4 text-sm leading-relaxed text-slate-100 backdrop-blur-sm sm:mb-10 sm:p-6 sm:text-base"
+                style={
+                  section.backgroundImage
+                    ? {
+                        backgroundImage: `linear-gradient(to bottom right, rgba(2, 6, 23, 0.88), rgba(15, 23, 42, 0.8)), url(${section.backgroundImage})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }
+                    : undefined
+                }
+              >
+                {section.paragraphs.map((paragraph, idx) => (
+                  <p key={`${section.id}-paragraph-${idx}`}>{paragraph}</p>
+                ))}
+              </div>
+            )}
+
             {!!section.features?.length && (
               <div className="mb-8 grid gap-3 sm:mb-10 sm:gap-4">
                 {section.features.map((feature) => (
@@ -303,145 +324,131 @@ export default function LandingPage() {
 
   const sections: LandingSection[] = [
     {
-      id: "enjeu",
-      badge: "Enjeu",
+      id: "hero",
+      badge: "Accueil",
       title: "Rendre le droit gabonais",
       subtitle: "clair et accessible",
       description:
-        "ALIN aide citoyens, praticiens et organisations à comprendre les enjeux juridiques liés à l'IA et aux démarches du quotidien avec des réponses pédagogiques et structurées.",
+        "Info Juridique Citoyenne transforme l'information juridique en un langage compréhensible, fiable et utile pour la vie quotidienne.",
       align: "left",
       actions: [
         {
-          label: "Voir la méthode",
+          label: "Découvrir le manifeste",
           variant: "primary",
-          onClick: () => goTo("/methode"),
+          onClick: () => goTo("/manifeste"),
         },
         {
-          label: "Accéder au chatbot",
+          label: "Poser une question au chatbot",
           variant: "secondary",
           onClick: () => goTo("/chatbot"),
         },
       ],
     },
     {
-      id: "methode",
-      badge: "Méthode",
-      title: "Cadrer, vérifier, restituer",
-      description:
-        "Le moteur privilégie les sources documentaires du droit gabonais et affiche des réponses traçables. Chaque étape vise la clarté, la rigueur et la transparence.",
-      align: "center",
-      features: [
-        {
-          title: "Cadrage juridique",
-          description:
-            "Qualification de la question et vérification de sa pertinence dans le périmètre gabonais.",
-        },
-        {
-          title: "Recherche contextualisée",
-          description:
-            "Priorité aux extraits de sources indexées pour limiter les réponses hors contexte.",
-        },
-        {
-          title: "Restitution explicite",
-          description:
-            "Réponse structurée avec indication claire de la base utilisée et des limites.",
-        },
-      ],
-      actions: [
-        {
-          label: "Voir les livrables",
-          variant: "primary",
-          onClick: () => goTo("/livrables"),
-        },
-      ],
-    },
-    {
-      id: "livrables",
-      badge: "Livrables",
-      title: "Des sorties",
-      subtitle: "immédiatement exploitables",
-      description:
-        "Au-delà de la réponse instantanée, ALIN propose des synthèses, des rapports et des exports PDF pour faciliter l'analyse et la transmission.",
-      align: "left",
-      features: [
-        {
-          title: "Réponse guidée",
-          description:
-            "Explication compréhensible et contextualisée avec références juridiques.",
-        },
-        {
-          title: "Synthèse de sources",
-          description:
-            "Consolidation des points utiles sur un sujet précis pour gagner du temps.",
-        },
-        {
-          title: "Rapport PDF",
-          description:
-            "Document partageable pour archivage, revue interne ou préparation d'un dossier.",
-        },
-      ],
-      actions: [
-        {
-          label: "À propos",
-          variant: "secondary",
-          onClick: () => goTo("/a-propos"),
-        },
-      ],
-    },
-    {
       id: "a-propos",
       badge: "À propos",
-      title: "Un projet orienté impact",
+      title: "Une innovation civique",
+      subtitle: "au service des citoyens",
       description:
-        "ALIN est conçu pour démocratiser l'accès à l'information juridique et accélérer la montée en compétence sur les usages de l'IA en droit.",
+        "Né du constat que l'accès au droit reste complexe pour une grande partie de la population, le projet crée un pont entre expertise juridique, pédagogie et intelligence artificielle.",
       align: "center",
+      backgroundImage:
+        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1600&q=80",
+      paragraphs: [
+        "Le site a d'abord été imaginé pour répondre à une difficulté simple: beaucoup de citoyens se retrouvent seuls face à des démarches juridiques qu'ils jugent trop techniques, trop longues, ou trop intimidantes.",
+        "En réunissant des sources juridiques gabonaises, des méthodes de recherche assistée et une interface conversationnelle, la plateforme propose une première lecture claire des règles applicables, sans jargon inutile.",
+        "Notre finalité n'est pas de remplacer les professionnels du droit, mais de mieux préparer les échanges: aider chacun à poser les bonnes questions, comprendre les notions essentielles et gagner en autonomie.",
+        "Cette approche vise aussi les associations, étudiants et petites organisations qui ont besoin d'un accès rapide à des repères juridiques fiables pour agir avec plus de confiance.",
+        "À terme, la mission reste constante: rendre le droit gabonais plus lisible, plus proche des usages réels, et plus accessible grâce à une innovation responsable.",
+      ],
       actions: [
         {
-          label: "Nous contacter",
+          label: "Voir la mission en bref",
           variant: "primary",
-          onClick: () => goTo("/contact"),
+          onClick: () =>
+            document.getElementById("manifeste")?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            }),
         },
       ],
     },
     {
-      id: "contact",
-      badge: "Contact",
-      title: "Parlons de votre besoin",
+      id: "manifeste",
+      badge: "Manifeste",
+      title: "Notre manifeste",
       description:
-        "Pour une démo, un partenariat ou l'ajout de nouvelles sources, contactez l'équipe ALIN.",
-      align: "right",
+        "Une vision claire: démocratiser l'accès à l'information juridique gabonaise, renforcer la compréhension citoyenne et promouvoir une technologie utile, transparente et inclusive.",
+      align: "left",
       actions: [
         {
-          label: "Écrire à l'équipe",
+          label: "Lire le manifeste",
           variant: "primary",
-          onClick: () => {
-            window.location.href = "mailto:felicia.oi@alin-africa.com";
-          },
+          onClick: () => goTo("/manifeste"),
+        },
+      ],
+    },
+    {
+      id: "blog",
+      badge: "Blog",
+      title: "Actualités et analyses",
+      subtitle: "du droit gabonais",
+      description:
+        "Retrouve des articles pédagogiques pour suivre les évolutions, comprendre les notions clés et appliquer le droit à des cas concrets.",
+      align: "center",
+      features: [
+        {
+          title: "Comprendre un licenciement en termes simples",
+          description:
+            "Un décryptage pas à pas des notions à vérifier avant toute démarche côté salarié ou employeur.",
         },
         {
-          label: "Aller au chatbot",
+          title: "Foncier: 5 réflexes avant d'acheter un terrain",
+          description:
+            "Checklist pratique pour sécuriser les vérifications administratives et limiter les risques.",
+        },
+        {
+          title: "Famille: ce que change une décision récente",
+          description:
+            "Lecture accessible des impacts concrets d'une évolution juridique pour les ménages.",
+        },
+      ],
+      actions: [
+        {
+          label: "Voir tous les articles",
           variant: "secondary",
-          onClick: () => {
-            window.location.href = "/chatbot";
-          },
+          onClick: () => goTo("/blog"),
         },
       ],
     },
     {
       id: "chatbot",
       badge: "Chatbot",
-      title: "Mode assistance",
-      subtitle: "et apprentissage",
+      title: "Un assistant IA juridique",
+      subtitle: "centré sur le Gabon",
       description:
-        "Le chatbot ALIN répond déjà aux questions juridiques et prépare la prochaine phase: mini-cours, exercices pratiques et corrections guidées.",
-      align: "center",
+        "Pose tes questions et obtiens une réponse structurée pour mieux comprendre tes droits, avec une approche pédagogique orientée vers le droit gabonais.",
+      align: "left",
       actions: [
         {
           label: "Ouvrir le chatbot",
           variant: "primary",
-          onClick: () => {
-            window.location.href = "/chatbot";
-          },
+          onClick: () => goTo("/chatbot"),
+        },
+      ],
+    },
+    {
+      id: "contacts",
+      badge: "Contacts",
+      title: "Parlons de vos besoins",
+      description:
+        "Pour une démonstration, un partenariat ou une question institutionnelle, notre équipe reste disponible.",
+      align: "right",
+      actions: [
+        {
+          label: "Accéder aux contacts",
+          variant: "primary",
+          onClick: () => goTo("/contacts"),
         },
       ],
     },
