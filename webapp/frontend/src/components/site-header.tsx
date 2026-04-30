@@ -32,10 +32,10 @@ function HeaderBar({ pathname }: HeaderBarProps) {
           className="min-w-0 shrink-0 pr-2 leading-tight no-underline hover:opacity-90"
         >
           <span className="block text-sm font-semibold tracking-wide text-[color:var(--foreground)]">
-            Ama&apos;IA
+            ALIN-Africa Legal Innovation Network
           </span>
           <span className="text-muted block max-w-[11rem] truncate text-[0.65rem] font-normal tracking-wide sm:max-w-[14rem] sm:text-xs md:max-w-none md:whitespace-normal">
-            Assistant juridique citoyen
+            ALIN-Africa Legal Innovation Network
           </span>
         </Link>
         <nav className="min-w-0 flex-1 overflow-x-auto" aria-label="Navigation principale">
