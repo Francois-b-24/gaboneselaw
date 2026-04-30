@@ -10,6 +10,25 @@ type AnthropicResponse = {
   content?: Array<{ type: string; text?: string }>;
 };
 
+type ResolvedEnvVar = {
+  value: string;
+  key: string;
+};
+
+const ANTHROPIC_API_KEY_ENV_KEYS = [
+  "ANTHROPIC_API_KEY",
+  "CLAUDE_API_KEY",
+  "ANTHROPIC_KEY",
+] as const;
+const ANTHROPIC_MODEL_ENV_KEYS = ["ANTHROPIC_MODEL", "CLAUDE_MODEL"] as const;
+const ANTHROPIC_FALLBACK_MODEL_ENV_KEYS = [
+  "ANTHROPIC_MODEL_FALLBACK",
+  "CLAUDE_MODEL_FALLBACK",
+] as const;
+const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
+const DEFAULT_ANTHROPIC_FALLBACK_MODEL = "claude-haiku-4-5";
+const DEFAULT_LLM_TEMPERATURE = 0.2;
+
 const SYSTEM_PROMPT = `Tu es un assistant juridique spécialisé en droit gabonais. Ton rôle est de répondre de manière claire, précise et accessible aux questions des utilisateurs sur le droit du Gabon.
 
 Si un contexte documentaire t'est fourni, appuie-toi prioritairement dessus. Sinon, réponds sur la base de tes connaissances générales en signalant les limites éventuelles.
@@ -17,6 +36,34 @@ Si un contexte documentaire t'est fourni, appuie-toi prioritairement dessus. Sin
 Précise toujours que tes réponses ne constituent pas un conseil juridique professionnel et invite l'utilisateur à consulter un avocat pour les cas concrets.
 
 Réponds en français.`;
+
+function resolveFirstEnv(keys: string[]): ResolvedEnvVar | null {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) {
+      return { value, key };
+    }
+  }
+  return null;
+}
+
+function resolveAnthropicRuntimeConfig() {
+  const apiKeyCandidate = resolveFirstEnv([...ANTHROPIC_API_KEY_ENV_KEYS]);
+  const modelCandidate = resolveFirstEnv([...ANTHROPIC_MODEL_ENV_KEYS]);
+  const fallbackModelCandidate = resolveFirstEnv([
+    ...ANTHROPIC_FALLBACK_MODEL_ENV_KEYS,
+  ]);
+  const temperatureRaw = process.env.LLM_TEMPERATURE ?? `${DEFAULT_LLM_TEMPERATURE}`;
+  const temperature = Number(temperatureRaw);
+
+  return {
+    apiKeyCandidate,
+    modelCandidate,
+    fallbackModelCandidate,
+    fallbackModel: fallbackModelCandidate?.value ?? DEFAULT_ANTHROPIC_FALLBACK_MODEL,
+    temperature: Number.isFinite(temperature) ? temperature : DEFAULT_LLM_TEMPERATURE,
+  };
+}
 
 function buildContextBlock(docs: Awaited<ReturnType<typeof searchDocuments>>) {
   if (!docs.length) return "";
@@ -110,21 +157,34 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6";
-    const fallbackModel =
-      process.env.ANTHROPIC_MODEL_FALLBACK ?? "claude-haiku-4-5";
-    const temperature = Number(process.env.LLM_TEMPERATURE ?? "0.2");
+    const config = resolveAnthropicRuntimeConfig();
+    const apiKey = config.apiKeyCandidate?.value;
+    const model = config.modelCandidate?.value ?? DEFAULT_ANTHROPIC_MODEL;
+    const fallbackModel = config.fallbackModel;
+    const temperature = config.temperature;
 
     if (!apiKey) {
+      console.error(
+        `[/api/chat] Configuration Anthropic manquante (api key). Variables supportees: ${ANTHROPIC_API_KEY_ENV_KEYS.join(
+          ", "
+        )}.`
+      );
       return NextResponse.json(
         {
           error:
-            "Configuration manquante: renseignez ANTHROPIC_API_KEY et ANTHROPIC_MODEL dans l'environnement.",
+            "Configuration manquante: renseignez une cle API Anthropic via ANTHROPIC_API_KEY (ou CLAUDE_API_KEY / ANTHROPIC_KEY) et un modele via ANTHROPIC_MODEL (ou CLAUDE_MODEL).",
         },
         { status: 500 }
       );
     }
+
+    console.info("[/api/chat] Configuration LLM resolue", {
+      apiKeyEnv: config.apiKeyCandidate?.key ?? null,
+      modelEnv: config.modelCandidate?.key ?? `default:${DEFAULT_ANTHROPIC_MODEL}`,
+      fallbackModelEnv:
+        config.fallbackModelCandidate?.key ??
+        `default:${DEFAULT_ANTHROPIC_FALLBACK_MODEL}`,
+    });
 
     let answer = "";
     try {

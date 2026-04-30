@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Production environment variables
+
+The chatbot API route (`/api/chat`) needs Anthropic configuration at runtime.
+
+Required:
+
+- `ANTHROPIC_API_KEY` (aliases accepted: `CLAUDE_API_KEY`, `ANTHROPIC_KEY`)
+
+Optional (defaults apply if not set):
+
+- `ANTHROPIC_MODEL` (alias accepted: `CLAUDE_MODEL`, default: `claude-sonnet-4-6`)
+- `ANTHROPIC_MODEL_FALLBACK` (alias accepted: `CLAUDE_MODEL_FALLBACK`, default: `claude-haiku-4-5`)
+- `LLM_TEMPERATURE` (default: `0.2`)
+
+After changing environment variables on your hosting platform (Vercel or similar),
+trigger a new deployment so server-side runtime picks up the updated values.
