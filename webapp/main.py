@@ -62,7 +62,14 @@ TOOL_LABELS = {
 
 def _parse_allowed_origins(raw: str) -> list[str]:
     values = [origin.strip() for origin in raw.split(",")]
-    return [origin for origin in values if origin]
+    origins = {origin for origin in values if origin}
+    expanded = set(origins)
+    for origin in origins:
+        if "://localhost" in origin:
+            expanded.add(origin.replace("://localhost", "://127.0.0.1"))
+        if "://127.0.0.1" in origin:
+            expanded.add(origin.replace("://127.0.0.1", "://localhost"))
+    return sorted(expanded)
 
 
 class ChatMessage(BaseModel):
