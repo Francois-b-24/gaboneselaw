@@ -9,7 +9,7 @@ export function SiteFooter() {
     >
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 md:grid-cols-3">
         <section>
-          <p className="text-sm font-semibold">Info Juridique Citoyenne</p>
+          <p className="text-sm font-semibold">Ama&apos;IA</p>
           <p className="text-muted mt-2 text-sm leading-relaxed">
             Rendre le droit gabonais accessible par l&apos;innovation, avec des réponses
             pédagogiques et responsables.
@@ -22,7 +22,7 @@ export function SiteFooter() {
             <li><Link href="/" className="hover:underline">À propos</Link></li>
             <li><Link href="/manifeste" className="hover:underline">Manifeste</Link></li>
             <li><Link href="/blog" className="hover:underline">Blog</Link></li>
-            <li><Link href="/chatbot" className="hover:underline">Chatbot</Link></li>
+            <li><Link href="/chatbot" className="hover:underline">Ama&apos;IA</Link></li>
             <li><Link href="/contacts" className="hover:underline">Contacts</Link></li>
           </ul>
         </section>
@@ -38,7 +38,7 @@ export function SiteFooter() {
         style={{ borderColor: "var(--border)" }}
       >
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 Info Juridique Citoyenne. Tous droits réservés.</p>
+          <p>© 2026 Ama&apos;IA. Tous droits réservés.</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/mentions-legales" className="hover:underline">Mentions légales</Link>
             <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>

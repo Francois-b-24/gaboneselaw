@@ -23,7 +23,7 @@ type BackendChatPayload = {
 };
 
 const INITIAL_ASSISTANT_MESSAGE =
-  "Bonjour, je suis votre assistant en droit gabonais. Posez votre question et je vous réponds de façon claire et accessible.";
+  "Bonjour, je suis Ama'IA, votre assistant en droit gabonais. Posez votre question et je vous reponds de facon claire et accessible.";
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
 const CHAT_REQUEST_TIMEOUT_MS = 90000;
 
@@ -39,6 +39,7 @@ export function ChatbotPanel() {
   const [lastAnswerQuality, setLastAnswerQuality] = useState<ChatQuality | null>(null);
   const messageContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
 
   const disclaimer = useMemo(() => {
     return "L'assistant peut faire des erreurs. Vérifiez les informations importantes.";
@@ -47,8 +48,17 @@ export function ChatbotPanel() {
   useEffect(() => {
     const container = messageContainerRef.current;
     if (!container) return;
+    if (!shouldAutoScrollRef.current) return;
     container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages, isLoading]);
+
+  function handleMessageScroll() {
+    const container = messageContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    shouldAutoScrollRef.current = distanceFromBottom < 80;
+  }
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -156,10 +166,10 @@ export function ChatbotPanel() {
   }
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-9rem)] w-full max-w-4xl flex-col px-3 py-4 sm:h-[calc(100vh-10rem)] sm:px-4 sm:py-6">
+    <main className="mx-auto flex h-[calc(100vh-9rem)] h-[calc(100dvh-9rem)] w-full max-w-4xl flex-col px-3 py-4 sm:h-[calc(100vh-10rem)] sm:h-[calc(100dvh-10rem)] sm:px-4 sm:py-6">
       <header className="mb-3 sm:mb-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold sm:text-3xl">Chatbot</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Ama&apos;IA</h1>
           <button
             type="button"
             onClick={clearConversation}
@@ -172,7 +182,7 @@ export function ChatbotPanel() {
           </button>
         </div>
         <p className="text-muted mt-2 text-sm">
-          Posez votre question sur le droit gabonais. L&apos;assistant répond de facon
+          Posez votre question sur le droit gabonais. Ama&apos;IA repond de facon
           claire, en tenant compte automatiquement du contexte disponible.
         </p>
       </header>
@@ -180,6 +190,7 @@ export function ChatbotPanel() {
       <section
         ref={messageContainerRef}
         aria-live="polite"
+        onScroll={handleMessageScroll}
         className="surface flex flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-slate-200/60 p-3 sm:gap-4 sm:p-4"
       >
         {messages.map((msg, index) => {
@@ -194,9 +205,11 @@ export function ChatbotPanel() {
               }`}
             >
               <p className="mb-1 text-[11px] font-medium uppercase tracking-wide opacity-70">
-                {isUser ? "Vous" : "Assistant"}
+                {isUser ? "Vous" : "Ama'IA"}
               </p>
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                {msg.content}
+              </p>
             </article>
           );
         })}
@@ -204,12 +217,15 @@ export function ChatbotPanel() {
         {isLoading ? (
           <article className="surface-muted mr-auto inline-flex items-center gap-2 rounded-lg p-3 text-sm" aria-live="polite">
             <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[color:var(--primary)]" />
-            <span>L&apos;assistant rédige sa réponse...</span>
+            <span>Ama&apos;IA redige sa reponse...</span>
           </article>
         ) : null}
       </section>
 
-      <div className="sticky bottom-0 mt-3 bg-[color:var(--background)] pb-2 pt-2">
+      <div
+        className="sticky bottom-0 mt-3 bg-[color:var(--background)] pb-2 pt-2"
+        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      >
         {lastAnswerQuality &&
         (!lastAnswerQuality.has_citation || !lastAnswerQuality.has_disclaimer) ? (
           <div className="mb-2 rounded-md border border-amber-300/60 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
@@ -249,7 +265,7 @@ export function ChatbotPanel() {
               <button
                 type="submit"
                 disabled={isLoading || !question.trim()}
-                title={isLoading ? "L'assistant prepare la reponse" : "Envoyer votre question"}
+                title={isLoading ? "Ama'IA prepare la reponse" : "Envoyer votre question"}
                 className="btn-primary min-w-24 rounded-md px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2"
               >
                 {isLoading ? "Envoi..." : "Envoyer"}
