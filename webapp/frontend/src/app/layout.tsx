@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ama'IA - Assistant juridique citoyen",
+  title: "ALIN - Africa Legal Innovation Network",
   description: "Rendre le droit gabonais plus accessible grace a un assistant juridique clair et responsable.",
   icons: {
     icon: [
