@@ -23,9 +23,10 @@ type BackendChatPayload = {
 };
 
 const INITIAL_ASSISTANT_MESSAGE =
-  "Bonjour, je suis Ama'IA, votre assistant en droit gabonais. Posez votre question et je vous reponds de facon claire et accessible.";
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
+  "Bonjour, je suis Ama'IA, votre assistant en droit gabonais. Posez votre question et je vous réponds de façon claire et accessible.";
 const CHAT_REQUEST_TIMEOUT_MS = 90000;
+const CHAT_PROXY_PATH = "/api/chat";
+const SESSION_CLEAR_PROXY_PATH = "/api/session/clear";
 
 export function ChatbotPanel() {
   const [question, setQuestion] = useState("");
@@ -81,18 +82,12 @@ export function ChatbotPanel() {
     setMessages(history);
 
     try {
-      if (!API_BASE_URL) {
-        throw new Error(
-          "Configuration manquante: renseignez NEXT_PUBLIC_API_BASE_URL pour connecter le chatbot au backend juridique."
-        );
-      }
-      const endpoint = `${API_BASE_URL}/api/chat`;
       const controller = new AbortController();
       const timeoutId = window.setTimeout(
         () => controller.abort("chat-timeout"),
         CHAT_REQUEST_TIMEOUT_MS
       );
-      const response = await fetch(endpoint, {
+      const response = await fetch(CHAT_PROXY_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: prompt, history, session_id: sessionId }),
@@ -101,9 +96,22 @@ export function ChatbotPanel() {
         window.clearTimeout(timeoutId);
       });
 
-      const payload = (await response.json()) as BackendChatPayload;
+      const payload = (await response.json()) as BackendChatPayload & {
+        detail?: string | { msg?: string }[];
+      };
       if (!response.ok) {
-        throw new Error(payload.error ?? "Le service de chat est indisponible.");
+        const detail = payload.detail;
+        const detailStr =
+          typeof detail === "string"
+            ? detail
+            : Array.isArray(detail)
+              ? detail.map((d) => (typeof d === "object" && d && "msg" in d ? String(d.msg) : "")).filter(Boolean).join(" ")
+              : "";
+        throw new Error(
+          (typeof payload.error === "string" && payload.error.trim()
+            ? payload.error.trim()
+            : detailStr.trim()) || "Le service de chat est momentanément indisponible."
+        );
       }
 
       setLastAnswerSources(payload.sources ?? []);
@@ -113,19 +121,28 @@ export function ChatbotPanel() {
       }
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: payload.answer ?? "Aucune reponse recue." },
+        { role: "assistant", content: payload.answer ?? "Aucune réponse reçue." },
       ]);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         setError(
-          "Le serveur juridique local ne repond pas a temps. Verifiez que le backend FastAPI tourne sur http://localhost:8000."
+          "Le service met trop de temps à répondre. Réessayez dans un instant ou rechargez la page."
         );
         return;
+      }
+      if (err instanceof TypeError) {
+        const raw = String(err.message ?? "");
+        if (/failed to fetch|load failed|networkerror/i.test(raw)) {
+          setError(
+            "Connexion interrompue. Vérifiez votre réseau, puis rechargez la page."
+          );
+          return;
+        }
       }
       setError(
         err instanceof Error
           ? err.message
-          : "Une erreur est survenue pendant la reponse de l'assistant."
+          : "Une erreur est survenue pendant la réponse de l'assistant."
       );
     } finally {
       setIsLoading(false);
@@ -147,13 +164,13 @@ export function ChatbotPanel() {
     setLastAnswerQuality(null);
     setMessages([{ role: "assistant", content: INITIAL_ASSISTANT_MESSAGE }]);
 
-    if (!API_BASE_URL || !sessionId) {
+    if (!sessionId) {
       setSessionId(null);
       return;
     }
 
     try {
-      await fetch(`${API_BASE_URL}/api/session/clear`, {
+      await fetch(SESSION_CLEAR_PROXY_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId }),
@@ -166,23 +183,11 @@ export function ChatbotPanel() {
   }
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-9rem)] h-[calc(100dvh-9rem)] w-full max-w-4xl flex-col px-3 py-4 sm:h-[calc(100vh-10rem)] sm:h-[calc(100dvh-10rem)] sm:px-4 sm:py-6">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col min-h-0 px-3 py-4 sm:px-4 sm:py-6">
       <header className="mb-3 sm:mb-4">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold sm:text-3xl">Ama&apos;IA</h1>
-          <button
-            type="button"
-            onClick={clearConversation}
-            disabled={isLoading}
-            title="Reinitialise la conversation en cours (messages et session)."
-            aria-label="Reinitialiser la conversation en cours"
-            className="rounded-md border border-slate-300/60 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Nouvelle conversation
-          </button>
-        </div>
+        <h1 className="text-2xl font-semibold sm:text-3xl">Ama&apos;IA</h1>
         <p className="text-muted mt-2 text-sm">
-          Posez votre question sur le droit gabonais. Ama&apos;IA repond de facon
+          Posez votre question sur le droit gabonais. Ama&apos;IA répond de façon
           claire, en tenant compte automatiquement du contexte disponible.
         </p>
       </header>
@@ -191,7 +196,7 @@ export function ChatbotPanel() {
         ref={messageContainerRef}
         aria-live="polite"
         onScroll={handleMessageScroll}
-        className="surface flex flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-slate-200/60 p-3 sm:gap-4 sm:p-4"
+        className="surface flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-xl border border-slate-200/60 p-3 sm:gap-4 sm:p-4"
       >
         {messages.map((msg, index) => {
           const isUser = msg.role === "user";
@@ -260,16 +265,30 @@ export function ChatbotPanel() {
               rows={1}
               className="surface min-h-12 w-full resize-none rounded-md border border-slate-300/50 bg-transparent px-3 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)]"
             />
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-muted text-xs">Entrée pour envoyer, Maj+Entrée pour un saut de ligne.</p>
-              <button
-                type="submit"
-                disabled={isLoading || !question.trim()}
-                title={isLoading ? "Ama'IA prepare la reponse" : "Envoyer votre question"}
-                className="btn-primary min-w-24 rounded-md px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2"
-              >
-                {isLoading ? "Envoi..." : "Envoyer"}
-              </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <p className="text-muted text-xs sm:max-w-[55%]">
+                Entrée pour envoyer, Maj+Entrée pour un saut de ligne.
+              </p>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <button
+                  type="submit"
+                  disabled={isLoading || !question.trim()}
+                  title={isLoading ? "Ama'IA prépare la réponse" : "Envoyer votre question"}
+                  className="btn-primary min-w-24 rounded-md px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2"
+                >
+                  {isLoading ? "Envoi..." : "Envoyer"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void clearConversation()}
+                  disabled={isLoading}
+                  title="Efface tous les messages et la session sur le serveur."
+                  aria-label="Supprimer la conversation"
+                  className="rounded-md border border-red-200/80 bg-white px-3 py-2.5 text-sm font-medium text-red-800 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Supprimer la conversation
+                </button>
+              </div>
             </div>
             <p className="text-muted text-[11px]">{disclaimer}</p>
           </div>
