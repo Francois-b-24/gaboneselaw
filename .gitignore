@@ -1,4 +1,11 @@
 .env
+# Next.js secrets (API URL, keys) — ne pas versionner
+webapp/frontend/.env.local
+webapp/frontend/.env*.local
+
+# Bases SQLite générées (réindexation RAG / audit local)
+data/*.db
+
 __pycache__/
 *.pyc
 *.pyo
@@ -7,3 +14,6 @@ venv/
 chroma_db/
 .DS_Store
 .streamlit/secrets.toml
+
+# Webapp request logs (local / runtime)
+webapp/logs/*.jsonl
