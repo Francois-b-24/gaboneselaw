@@ -2,26 +2,25 @@
 
 import { type FormEvent, useCallback, useState } from "react";
 
-/** FormSubmit : l’appel doit partir du navigateur (CORS « cross-origin » documenté) ; un proxy Next côté serveur est souvent refusé. */
-function formSubmitEndpoint(): string {
-  const raw = (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "felicia.oi@alin-africa.com").trim();
-  return `https://formsubmit.co/ajax/${encodeURIComponent(raw)}`;
+const DEFAULT_CONTACT_EMAIL = "felicia.oi@alin-africa.com";
+/** Longueur max. prudente pour les liens mailto (varie selon les clients mail). */
+const MAX_MAILTO_CHARS = 1900;
+
+function contactRecipient(): string {
+  const raw = process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim();
+  return raw || DEFAULT_CONTACT_EMAIL;
 }
 
-type FormSubmitAjaxResponse = {
-  success?: string | boolean;
-  message?: string;
-};
+function buildMailtoHref(to: string, subject: string, body: string): string {
+  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export function ContactForm() {
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<"idle" | "opened" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const onSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setStatus("sending");
     setErrorMessage(null);
     const form = e.currentTarget;
     const fd = new FormData(form);
@@ -41,54 +40,25 @@ export function ContactForm() {
       return;
     }
 
+    const to = contactRecipient();
     const subjectLine = subject || `Contact site ALIN — ${name}`;
-    const textBody = [`De : ${name} <${email}>`, "", message].join("\n");
+    const body = [`De : ${name} <${email}>`, "", message].join("\n");
+    const href = buildMailtoHref(to, subjectLine, body);
 
-    try {
-      const res = await fetch(formSubmitEndpoint(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          _replyto: email,
-          _subject: subjectLine,
-          _captcha: "false",
-          message: textBody,
-        }),
-      });
-
-      const data = (await res.json().catch(() => ({}))) as FormSubmitAjaxResponse & {
-        error?: string;
-      };
-
-      const okSuccess =
-        data.success === true ||
-        data.success === "true" ||
-        (res.ok && data.success !== false && data.success !== "false");
-
-      if (!res.ok || !okSuccess) {
-        setStatus("error");
-        setErrorMessage(
-          typeof data.message === "string" && data.message.trim()
-            ? data.message.trim()
-            : data.error ??
-                "L'envoi a échoué. Si c'est la première utilisation, l'équipe doit activer le formulaire depuis l'email FormSubmit."
-        );
-        return;
-      }
-      setStatus("success");
-      form.reset();
-    } catch {
+    if (href.length > MAX_MAILTO_CHARS) {
       setStatus("error");
       setErrorMessage(
-        "Impossible d'envoyer le message (réseau ou blocage). Réessayez plus tard."
+        `Le message est trop long pour s'ouvrir automatiquement dans la messagerie (limite d'environ ${MAX_MAILTO_CHARS} caractères). Réduisez le texte ou écrivez directement à ${to}.`
       );
+      return;
     }
+
+    setStatus("idle");
+    window.location.href = href;
+    setStatus("opened");
   }, []);
+
+  const to = contactRecipient();
 
   return (
     <form
@@ -97,12 +67,20 @@ export function ContactForm() {
     >
       <h2 className="text-lg font-medium">Nous écrire</h2>
       <p className="text-muted text-sm">
-        Votre message est envoyé directement à notre équipe. Nous vous répondrons
-        sur l&apos;adresse email indiquée.
+        En validant le formulaire, votre logiciel de messagerie s&apos;ouvre avec un
+        message prérempli vers notre équipe. Il vous suffit alors d&apos;envoyer
+        l&apos;email depuis votre boîte mail.
       </p>
-      {status === "success" && (
+      <p className="text-muted text-sm">
+        Adresse de contact :{" "}
+        <a className="font-medium text-[color:var(--primary)] underline" href={`mailto:${to}`}>
+          {to}
+        </a>
+      </p>
+      {status === "opened" && (
         <p className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-[color:var(--foreground)]">
-          Message envoyé. Merci pour votre prise de contact.
+          Si la messagerie ne s&apos;est pas ouverte, vérifiez qu&apos;un client mail est
+          installé sur cet appareil, ou utilisez le lien email ci-dessus.
         </p>
       )}
       {status === "error" && errorMessage && (
@@ -126,8 +104,7 @@ export function ContactForm() {
           type="text"
           required
           autoComplete="name"
-          disabled={status === "sending"}
-          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)]"
           style={{
             borderColor: "var(--border)",
             backgroundColor: "var(--background)",
@@ -145,8 +122,7 @@ export function ContactForm() {
           type="email"
           required
           autoComplete="email"
-          disabled={status === "sending"}
-          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)]"
           style={{
             borderColor: "var(--border)",
             backgroundColor: "var(--background)",
@@ -162,8 +138,7 @@ export function ContactForm() {
           id="contact-subject"
           name="subject"
           type="text"
-          disabled={status === "sending"}
-          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)]"
           style={{
             borderColor: "var(--border)",
             backgroundColor: "var(--background)",
@@ -180,8 +155,7 @@ export function ContactForm() {
           name="message"
           required
           rows={5}
-          disabled={status === "sending"}
-          className="mt-1 w-full resize-y rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-1 w-full resize-y rounded-md border px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)]"
           style={{
             borderColor: "var(--border)",
             backgroundColor: "var(--background)",
@@ -191,10 +165,9 @@ export function ContactForm() {
       </div>
       <button
         type="submit"
-        disabled={status === "sending"}
-        className="rounded-lg bg-[color:var(--primary)] px-4 py-2.5 text-sm font-medium text-[color:var(--primary-foreground)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--primary)]"
+        className="rounded-lg bg-[color:var(--primary)] px-4 py-2.5 text-sm font-medium text-[color:var(--primary-foreground)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--primary)]"
       >
-        {status === "sending" ? "Envoi…" : "Envoyer"}
+        Ouvrir ma messagerie
       </button>
     </form>
   );
