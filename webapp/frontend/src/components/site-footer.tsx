@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TranslatedLink } from "@/components/translated-link";
 import { SocialLinks } from "@/components/social-links";
 
 export function SiteFooter() {
@@ -19,11 +19,12 @@ export function SiteFooter() {
         <section>
           <p className="text-sm font-semibold">Navigation rapide</p>
           <ul className="text-muted mt-2 space-y-1 text-sm">
-            <li><Link href="/" className="hover:underline">À propos</Link></li>
-            <li><Link href="/manifeste" className="hover:underline">Manifeste</Link></li>
-            <li><Link href="/blog" className="hover:underline">Blog</Link></li>
-            <li><Link href="/chatbot" className="hover:underline">Ama&apos;IA</Link></li>
-            <li><Link href="/contacts" className="hover:underline">Contacts</Link></li>
+            <li><TranslatedLink href="/" className="hover:underline">Accueil</TranslatedLink></li>
+            <li><TranslatedLink href="/a-propos" className="hover:underline">À propos</TranslatedLink></li>
+            <li><TranslatedLink href="/manifeste" className="hover:underline">Manifeste</TranslatedLink></li>
+            <li><TranslatedLink href="/blog" className="hover:underline">Blog</TranslatedLink></li>
+            <li><TranslatedLink href="/chatbot" className="hover:underline">Ama&apos;IA</TranslatedLink></li>
+            <li><TranslatedLink href="/contacts" className="hover:underline">Contacts</TranslatedLink></li>
           </ul>
         </section>
 
@@ -40,9 +41,9 @@ export function SiteFooter() {
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p>© 2026 Ama&apos;IA. Tous droits réservés.</p>
           <div className="flex flex-wrap gap-3">
-            <Link href="/mentions-legales" className="hover:underline">Mentions légales</Link>
-            <Link href="/confidentialite" className="hover:underline">Confidentialité</Link>
-            <Link href="/cgu" className="hover:underline">CGU</Link>
+            <TranslatedLink href="/mentions-legales" className="hover:underline">Mentions légales</TranslatedLink>
+            <TranslatedLink href="/confidentialite" className="hover:underline">Confidentialité</TranslatedLink>
+            <TranslatedLink href="/cgu" className="hover:underline">CGU</TranslatedLink>
           </div>
         </div>
       </div>

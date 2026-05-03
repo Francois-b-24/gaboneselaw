@@ -1,7 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { LinkedInIcon } from "@/components/linkedin-icon";
+import { TranslatedLink } from "@/components/translated-link";
 import Globe from "@/components/ui/globe";
+import { BLOG_ARTICLES } from "@/data/blog-articles";
 import { cn } from "@/lib/utils";
 
 type SectionAction = {
@@ -13,15 +17,44 @@ type SectionAction = {
 type SectionFeature = {
   title: string;
   description: string;
+  /** Lien interne (ex. article de blog) */
+  href?: string;
+};
+
+function blogFeatureFromSlug(slug: string): SectionFeature {
+  const article = BLOG_ARTICLES.find((a) => a.slug === slug);
+  if (!article) {
+    return { title: "", description: "" };
+  }
+  return {
+    title: article.title,
+    description: article.excerpt,
+    href: `/blog/${article.slug}`,
+  };
+}
+
+type SectionExternalLink = {
+  href: string;
+  /** Texte du lien, ou libellé d’accessibilité si `icon` est défini. */
+  label: string;
+  icon?: "linkedin";
+};
+
+type SectionPortrait = {
+  src: string;
+  alt: string;
 };
 
 type LandingSection = {
   id: string;
   badge?: string;
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   description: string;
+  /** Portrait optionnel (ex. section À propos). */
+  portrait?: SectionPortrait;
   paragraphs?: string[];
+  links?: SectionExternalLink[];
   backgroundImage?: string;
   align?: "left" | "center" | "right";
   features?: SectionFeature[];
@@ -209,7 +242,8 @@ function ScrollGlobe({
           <div className="w-full max-w-sm rounded-2xl border border-slate-300/20 bg-slate-950/72 p-5 text-slate-50 shadow-2xl backdrop-blur-sm opacity-100 transition-all duration-700 will-change-transform sm:max-w-lg sm:p-6 md:max-w-2xl lg:max-w-4xl lg:p-8 xl:max-w-5xl">
             <h2
               className={cn(
-                "mb-6 font-bold leading-[1.1] tracking-tight sm:mb-8",
+                "font-bold leading-[1.1] tracking-tight",
+                section.portrait ? "mb-4 sm:mb-5" : "mb-6 sm:mb-8",
                 index === 0
                   ? "text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
                   : "text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl",
@@ -231,6 +265,25 @@ function ScrollGlobe({
               )}
             </h2>
 
+            {section.portrait ? (
+              <div
+                className={cn(
+                  "mb-6 sm:mb-8",
+                  section.align === "center" && "flex justify-center",
+                  section.align === "right" && "flex justify-end",
+                )}
+              >
+                <Image
+                  src={section.portrait.src}
+                  alt={section.portrait.alt}
+                  width={320}
+                  height={320}
+                  className="h-28 w-28 rounded-full object-cover shadow-lg ring-2 ring-slate-300/35 sm:h-36 sm:w-36"
+                  sizes="(max-width: 640px) 112px, 144px"
+                />
+              </div>
+            ) : null}
+
             <div
               className={cn(
                 "mb-8 text-base font-light leading-relaxed text-slate-200 sm:mb-10 sm:text-lg lg:text-xl",
@@ -240,7 +293,7 @@ function ScrollGlobe({
               <p className="mb-3 sm:mb-4">{section.description}</p>
             </div>
 
-            {!!section.paragraphs?.length && (
+            {!!(section.paragraphs?.length || section.links?.length) && (
               <div
                 className="mb-8 space-y-4 rounded-xl border border-slate-300/25 bg-slate-950/45 p-4 text-sm leading-relaxed text-slate-100 backdrop-blur-sm sm:mb-10 sm:p-6 sm:text-base"
                 style={
@@ -253,19 +306,46 @@ function ScrollGlobe({
                     : undefined
                 }
               >
-                {section.paragraphs.map((paragraph, idx) => (
+                {section.paragraphs?.map((paragraph, idx) => (
                   <p key={`${section.id}-paragraph-${idx}`}>{paragraph}</p>
+                ))}
+                {section.links?.map((link) => (
+                  <p
+                    key={link.href}
+                    className={cn(
+                      "border-t border-slate-300/20 pt-4",
+                      section.align === "center" && "text-center",
+                    )}
+                  >
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={link.icon ? link.label : undefined}
+                      className={cn(
+                        "inline-flex items-center justify-center transition-colors",
+                        link.icon === "linkedin"
+                          ? "rounded-md text-[#0A66C2] hover:text-[#004182] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                          : "font-medium text-primary underline-offset-4 hover:text-primary/90 hover:underline",
+                      )}
+                    >
+                      {link.icon === "linkedin" ? (
+                        <LinkedInIcon className="h-9 w-9 sm:h-10 sm:w-10" />
+                      ) : (
+                        link.label
+                      )}
+                    </a>
+                  </p>
                 ))}
               </div>
             )}
 
             {!!section.features?.length && (
               <div className="mb-8 grid gap-3 sm:mb-10 sm:gap-4">
-                {section.features.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="group rounded-lg border border-slate-300/20 bg-slate-900/60 p-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-primary/20 sm:rounded-xl sm:p-5 lg:p-6"
-                  >
+                {section.features.map((feature) => {
+                  const cardClass =
+                    "group rounded-lg border border-slate-300/20 bg-slate-900/60 p-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-slate-800/70 hover:shadow-lg hover:shadow-primary/20 sm:rounded-xl sm:p-5 lg:p-6";
+                  const inner = (
                     <div className="flex items-start gap-3 sm:gap-4">
                       <div className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary/60 transition-colors group-hover:bg-primary sm:mt-2 sm:h-2 sm:w-2" />
                       <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
@@ -277,8 +357,21 @@ function ScrollGlobe({
                         </p>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                  return feature.href ? (
+                    <TranslatedLink
+                      key={feature.href}
+                      href={feature.href}
+                      className={`${cardClass} block cursor-pointer no-underline outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
+                    >
+                      {inner}
+                    </TranslatedLink>
+                  ) : (
+                    <div key={feature.title} className={cardClass}>
+                      {inner}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -329,56 +422,22 @@ export default function LandingPage() {
       title: "Rendre le droit gabonais",
       subtitle: "clair et accessible",
       description:
-        "Info Juridique Citoyenne transforme l'information juridique en un langage compréhensible, fiable et utile pour la vie quotidienne.",
+        "African Legal Innovation Network transforme l'information juridique en un langage compréhensible, fiable et utile pour la vie quotidienne.",
       align: "left",
       actions: [
         {
-          label: "Découvrir le manifeste",
+          label: "À propos",
           variant: "primary",
-          onClick: () => goTo("/manifeste"),
-        },
-        {
-          label: "Poser une question au chatbot",
-          variant: "secondary",
-          onClick: () => goTo("/chatbot"),
-        },
-      ],
-    },
-    {
-      id: "a-propos",
-      badge: "À propos",
-      title: "Une innovation civique",
-      subtitle: "au service des citoyens",
-      description:
-        "Né du constat que l'accès au droit reste complexe pour une grande partie de la population, le projet crée un pont entre expertise juridique, pédagogie et intelligence artificielle.",
-      align: "center",
-      backgroundImage:
-        "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1600&q=80",
-      paragraphs: [
-        "Le site a d'abord été imaginé pour répondre à une difficulté simple: beaucoup de citoyens se retrouvent seuls face à des démarches juridiques qu'ils jugent trop techniques, trop longues, ou trop intimidantes.",
-        "En réunissant des sources juridiques gabonaises, des méthodes de recherche assistée et une interface conversationnelle, la plateforme propose une première lecture claire des règles applicables, sans jargon inutile.",
-        "Notre finalité n'est pas de remplacer les professionnels du droit, mais de mieux préparer les échanges: aider chacun à poser les bonnes questions, comprendre les notions essentielles et gagner en autonomie.",
-        "Cette approche vise aussi les associations, étudiants et petites organisations qui ont besoin d'un accès rapide à des repères juridiques fiables pour agir avec plus de confiance.",
-        "À terme, la mission reste constante: rendre le droit gabonais plus lisible, plus proche des usages réels, et plus accessible grâce à une innovation responsable.",
-      ],
-      actions: [
-        {
-          label: "Voir la mission en bref",
-          variant: "primary",
-          onClick: () =>
-            document.getElementById("manifeste")?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            }),
+          onClick: () => goTo("/a-propos"),
         },
       ],
     },
     {
       id: "manifeste",
       badge: "Manifeste",
-      title: "Notre manifeste",
+      title: "Notre Manifeste :",
       description:
-        "Une vision claire: démocratiser l'accès à l'information juridique gabonaise, renforcer la compréhension citoyenne et promouvoir une technologie utile, transparente et inclusive.",
+        "Affirmer l'expertise juridique africaine à l'ère de l'intelligence artificielle.",
       align: "left",
       actions: [
         {
@@ -397,21 +456,9 @@ export default function LandingPage() {
         "Retrouve des articles pédagogiques pour suivre les évolutions, comprendre les notions clés et appliquer le droit à des cas concrets.",
       align: "center",
       features: [
-        {
-          title: "Comprendre un licenciement en termes simples",
-          description:
-            "Un décryptage pas à pas des notions à vérifier avant toute démarche côté salarié ou employeur.",
-        },
-        {
-          title: "Foncier: 5 réflexes avant d'acheter un terrain",
-          description:
-            "Checklist pratique pour sécuriser les vérifications administratives et limiter les risques.",
-        },
-        {
-          title: "Famille: ce que change une décision récente",
-          description:
-            "Lecture accessible des impacts concrets d'une évolution juridique pour les ménages.",
-        },
+        blogFeatureFromSlug("droit-du-travail-et-automatisation"),
+        blogFeatureFromSlug("reforme-fonciere-gabon-ce-qui-change"),
+        blogFeatureFromSlug("comprendre-le-code-civil-gabonais-en-5-minutes"),
       ],
       actions: [
         {

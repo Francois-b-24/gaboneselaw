@@ -1,3 +1,4 @@
+import { ContactForm } from "@/components/contact-form";
 import { SocialLinks } from "@/components/social-links";
 
 export default function ContactsPage() {
@@ -8,14 +9,7 @@ export default function ContactsPage() {
         Pour toute question sur le projet, les contenus pédagogiques, ou pour
         proposer une source juridique officielle, vous pouvez nous contacter.
       </p>
-      <div className="surface mt-6 rounded-xl p-5">
-        <p className="text-sm">
-          Email: <span className="font-medium">felicia.oi@alin-africa.com</span>
-        </p>
-        <p className="mt-2 text-sm">
-          Note : ce canal ne remplace pas une consultation juridique.
-        </p>
-      </div>
+      <ContactForm />
       <section className="surface mt-6 rounded-xl p-5">
         <h2 className="text-lg font-medium">Suivez-nous</h2>
         <p className="text-muted mt-2 text-sm">

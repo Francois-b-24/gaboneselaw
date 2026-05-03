@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ALIN - Africa Legal Innovation Network",
+  title: "ALIN - African Legal Innovation Network",
   description: "Rendre le droit gabonais plus accessible grace a un assistant juridique clair et responsable.",
   icons: {
     icon: [
@@ -34,11 +34,17 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full overflow-x-hidden">
+      <body className="flex min-h-[100dvh] flex-col overflow-x-hidden">
+        <div
+          id="google_translate_element"
+          className="google-translate-hide"
+          aria-hidden
+        />
         <SiteHeader />
-        <div className="flex-1">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
         <SiteFooter />
       </body>
     </html>

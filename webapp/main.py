@@ -18,7 +18,7 @@ from redis import Redis
 from redis.exceptions import RedisError
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -33,11 +33,17 @@ from src.config import (
     COLLECTION_NAME,
     DOMAINES,
     FRONTEND_ORIGINS,
+    PDF_DIR,
+    RAG_STRUCTURED_CITATIONS,
     REDIS_URL,
     TOP_K,
 )
+from src.generation.citation_validator import build_and_validate_citations
 from src.rag.retriever import LegalChunk
 from src.rag.upload_indexer import clear_upload_collection, index_uploaded_pdf
+from src.retrieval.query_rewriter import rewrite_queries
+from src.retrieval.source_fetcher import SourceFetcher
+from src.storage.audit_rag import RAGAuditLog
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -196,12 +202,25 @@ def _source_badge_type(chunk: LegalChunk) -> str:
 
 
 def _chunk_to_dict(chunk: LegalChunk) -> dict[str, Any]:
-    return {
+    meta = chunk.metadata or {}
+    aid = meta.get("article_id") or meta.get("logical_article_id")
+    out: dict[str, Any] = {
         "citation": chunk.citation,
         "text": chunk.text,
         "score": round(chunk.score, 3),
         "badge": _source_badge_type(chunk),
     }
+    if aid:
+        out["article_id"] = str(aid)
+    return out
+
+
+@lru_cache(maxsize=1)
+def _rag_audit_log() -> RAGAuditLog | None:
+    try:
+        return RAGAuditLog()
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _source_summary(chunks: list[LegalChunk]) -> dict[str, Any]:
@@ -703,6 +722,31 @@ def api_suggested_questions() -> dict[str, Any]:
     return {"questions": _suggested_questions()}
 
 
+@app.get("/api/sources/{article_id}")
+def api_source_article(article_id: str) -> dict[str, Any]:
+    fetcher = SourceFetcher()
+    if fetcher.get_article_by_id(article_id) is None:
+        raise HTTPException(status_code=404, detail="Article inconnu")
+    return fetcher.get_article_context(article_id)
+
+
+@app.get("/api/sources/{article_id}/pdf")
+def api_source_article_pdf(article_id: str, page: int | None = None) -> FileResponse:
+    fetcher = SourceFetcher()
+    path_str = fetcher.get_article_pdf_link(article_id, page)
+    if not path_str:
+        raise HTTPException(status_code=404, detail="Aucun PDF associé")
+    p = Path(path_str)
+    if not p.is_file():
+        raise HTTPException(status_code=404, detail="Fichier PDF introuvable")
+    return FileResponse(
+        str(p.resolve()),
+        media_type="application/pdf",
+        filename=p.name,
+        headers={"Content-Disposition": f'inline; filename="{p.name}"'},
+    )
+
+
 @app.post("/api/chat")
 def api_chat(payload: ChatRequest, request: Request) -> dict[str, Any]:
     _check_rate_limit(request, "chat")
@@ -730,6 +774,16 @@ def api_chat(payload: ChatRequest, request: Request) -> dict[str, Any]:
                 response.tools_used.append("recherche_juridique_fallback")
         source_stats = _source_summary(sources)
         has_citation = "[Source :" in answer
+        citations = None
+        if RAG_STRUCTURED_CITATIONS and sources:
+            try:
+                from src.storage.source_registry import SourceRegistry
+
+                citations = build_and_validate_citations(
+                    answer, sources, SourceRegistry()
+                )
+            except Exception:  # noqa: BLE001
+                citations = None
         latency_ms = int((time.time() - started) * 1000)
         _log_request(
             {
@@ -746,6 +800,28 @@ def api_chat(payload: ChatRequest, request: Request) -> dict[str, Any]:
                 "ip": request.client.host if request.client else "unknown",
             }
         )
+        audit = _rag_audit_log()
+        if audit and RAG_STRUCTURED_CITATIONS:
+            try:
+                rq = rewrite_queries(payload.question)
+                rf = rq.get("queries", []) if isinstance(rq, dict) else []
+                cids = [
+                    (s.metadata or {}).get("article_id")
+                    or (s.metadata or {}).get("logical_article_id")
+                    or ""
+                    for s in sources
+                ]
+                flags = [bool(c.get("verified")) for c in (citations or [])]
+                audit.log_turn(
+                    question=payload.question,
+                    reformulations=list(rf) if isinstance(rf, list) else [],
+                    chunk_ids=[str(x) for x in cids if x],
+                    answer=answer,
+                    citations_validated=flags,
+                    duration_ms=latency_ms,
+                )
+            except Exception:  # noqa: BLE001
+                pass
         _save_session_turn(session_id, payload.question, answer)
         return {
             "session_id": session_id,
@@ -753,6 +829,7 @@ def api_chat(payload: ChatRequest, request: Request) -> dict[str, Any]:
             "sources": [_chunk_to_dict(s) for s in sources],
             "tools_used": response.tools_used,
             "source_stats": source_stats,
+            "citations": citations,
             "quality": {
                 "has_citation": has_citation,
                 "has_disclaimer": "information juridique generale"
@@ -951,6 +1028,16 @@ def api_chat_stream(payload: ChatRequest, request: Request) -> StreamingResponse
                     response.tools_used.append("recherche_juridique_fallback")
             source_stats = _source_summary(sources)
             has_citation = "[Source :" in answer
+            citations = None
+            if RAG_STRUCTURED_CITATIONS and sources:
+                try:
+                    from src.storage.source_registry import SourceRegistry
+
+                    citations = build_and_validate_citations(
+                        answer, sources, SourceRegistry()
+                    )
+                except Exception:  # noqa: BLE001
+                    citations = None
             latency_ms = int((time.time() - started) * 1000)
             _save_session_turn(session_id, payload.question, answer)
             _log_request(
@@ -968,6 +1055,28 @@ def api_chat_stream(payload: ChatRequest, request: Request) -> StreamingResponse
                     "ip": request.client.host if request.client else "unknown",
                 }
             )
+            audit = _rag_audit_log()
+            if audit and RAG_STRUCTURED_CITATIONS:
+                try:
+                    rq = rewrite_queries(payload.question)
+                    rf = rq.get("queries", []) if isinstance(rq, dict) else []
+                    cids = [
+                        (s.metadata or {}).get("article_id")
+                        or (s.metadata or {}).get("logical_article_id")
+                        or ""
+                        for s in sources
+                    ]
+                    flags = [bool(c.get("verified")) for c in (citations or [])]
+                    audit.log_turn(
+                        question=payload.question,
+                        reformulations=list(rf) if isinstance(rf, list) else [],
+                        chunk_ids=[str(x) for x in cids if x],
+                        answer=answer,
+                        citations_validated=flags,
+                        duration_ms=latency_ms,
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
             yield _build_sse_event(
                 "done",
                 {
@@ -976,6 +1085,7 @@ def api_chat_stream(payload: ChatRequest, request: Request) -> StreamingResponse
                     "sources": [_chunk_to_dict(s) for s in sources],
                     "tools_used": response.tools_used,
                     "source_stats": source_stats,
+                    "citations": citations,
                     "quality": {
                         "has_citation": has_citation,
                         "has_disclaimer": "information juridique generale"

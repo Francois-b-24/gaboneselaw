@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TranslatedLink } from "@/components/translated-link";
 import { BLOG_ARTICLES } from "@/data/blog-articles";
 
 function formatDate(date: string) {
@@ -26,7 +26,7 @@ export default function BlogPage() {
             key={article.slug}
             className="surface group overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
           >
-            <Link href={`/blog/${article.slug}`} className="block h-full">
+            <TranslatedLink href={`/blog/${article.slug}`} className="block h-full">
               <div className="aspect-[16/9] w-full overflow-hidden">
                 <img
                   src={article.coverImage}
@@ -44,10 +44,10 @@ export default function BlogPage() {
                   {article.excerpt}
                 </p>
                 <p className="mt-4 text-xs font-medium text-[color:var(--primary)]">
-                  Lire l'article
+                  Lire l&apos;article
                 </p>
               </div>
-            </Link>
+            </TranslatedLink>
           </article>
         ))}
       </section>

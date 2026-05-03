@@ -1,13 +1,12 @@
+import { LinkedInIcon } from "@/components/linkedin-icon";
 import { SOCIAL_LINKS, type SocialPlatform } from "@/data/socials";
 
 function SocialIcon({ icon }: { icon: SocialPlatform }) {
   switch (icon) {
     case "linkedin":
-      return (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path fill="currentColor" d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0-.02-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-1 1.82-2.05 3.75-2.05 4.01 0 4.75 2.64 4.75 6.08V21h-4v-5.6c0-1.33-.02-3.05-1.86-3.05-1.86 0-2.14 1.45-2.14 2.95V21h-4V9Z" />
-        </svg>
-      );
+      return <LinkedInIcon className="h-5 w-5" />;
+    default:
+      return null;
   }
 }
 

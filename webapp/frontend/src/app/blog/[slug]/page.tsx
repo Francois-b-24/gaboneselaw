@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TranslatedLink } from "@/components/translated-link";
 import { notFound } from "next/navigation";
 import { BLOG_ARTICLES, getBlogArticleBySlug } from "@/data/blog-articles";
 
@@ -28,9 +28,9 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
   return (
     <main className="mx-auto w-full max-w-4xl px-3 py-10 sm:px-4 sm:py-12">
-      <Link href="/blog" className="text-muted text-sm hover:underline">
+      <TranslatedLink href="/blog" className="text-muted text-sm hover:underline">
         ← Retour au blog
-      </Link>
+      </TranslatedLink>
 
       <article className="mt-5">
         <div className="overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)" }}>
@@ -96,12 +96,12 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
                 {section.link ? (
                   <p>
-                    <Link
+                    <TranslatedLink
                       href={section.link.href}
                       className="text-sm font-medium text-[color:var(--primary)] hover:underline"
                     >
                       {section.link.label}
-                    </Link>
+                    </TranslatedLink>
                   </p>
                 ) : null}
               </section>

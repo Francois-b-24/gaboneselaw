@@ -14,6 +14,10 @@ from sentence_transformers import SentenceTransformer
 from src.config import EMBEDDING_MODEL
 
 
+def _is_bge_model() -> bool:
+    return "bge-m3" in EMBEDDING_MODEL.lower()
+
+
 @lru_cache(maxsize=1)
 def _load_model() -> SentenceTransformer:
     """Charge le modèle une seule fois (coûteux)."""
@@ -34,14 +38,20 @@ class E5EmbeddingFunction(EmbeddingFunction):
 
     def __call__(self, input: Documents) -> Embeddings:  # noqa: A002 (API Chroma)
         model = _load_model()
-        texts = [f"{self.prefix}{t}" for t in input]
+        if _is_bge_model():
+            texts = list(input)
+        else:
+            texts = [f"{self.prefix}{t}" for t in input]
         vectors = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
         return vectors.tolist()
 
 
 def embed_query(text: str) -> list[float]:
-    """Embed une requête utilisateur avec le préfixe ``query:``."""
+    """Embed une requête utilisateur (préfixe E5 ``query:`` ou modèle BGE sans préfixe)."""
     model = _load_model()
+    if _is_bge_model():
+        vector = model.encode([text], normalize_embeddings=True, show_progress_bar=False)
+        return vector[0].tolist()
     vector = model.encode(
         [f"query: {text}"], normalize_embeddings=True, show_progress_bar=False
     )

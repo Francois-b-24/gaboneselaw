@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TranslatedLink } from "@/components/translated-link";
 
 const ITEMS = [
   {
@@ -66,9 +66,9 @@ export default function RessourcesPage() {
           rapport si nécessaire.
         </p>
         <div className="mt-5">
-          <Link href="/chatbot" className="btn-primary rounded-md px-4 py-2 text-sm">
+          <TranslatedLink href="/chatbot" className="btn-primary rounded-md px-4 py-2 text-sm">
             Aller vers le chatbot
-          </Link>
+          </TranslatedLink>
         </div>
       </section>
     </main>

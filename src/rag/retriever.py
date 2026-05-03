@@ -9,7 +9,7 @@ from typing import Any
 
 import chromadb
 
-from src.config import CHROMA_PATH, COLLECTION_NAME, TOP_K, UPLOAD_COLLECTION_NAME
+from src.config import CHROMA_PATH, COLLECTION_NAME, TOP_K, UPLOAD_COLLECTION_NAME, USE_HYBRID_RAG
 from src.rag.embeddings import E5EmbeddingFunction, embed_query
 
 log = logging.getLogger(__name__)
@@ -37,6 +37,19 @@ class LegalRetriever:
             name=collection_name,
             embedding_function=E5EmbeddingFunction(prefix="passage: "),
         )
+        self._hybrid = None
+        if USE_HYBRID_RAG:
+            try:
+                from src.retrieval.hybrid_search import HybridSearchEngine
+                from src.storage.source_registry import SourceRegistry
+
+                reg = SourceRegistry()
+                if reg.iter_bm25_corpus():
+                    self._hybrid = HybridSearchEngine(reg, collection_name=collection_name)
+                else:
+                    log.info("Hybrid RAG activé mais corpus BM25 vide — fallback dense.")
+            except Exception as exc:  # noqa: BLE001
+                log.warning("Initialisation hybrid ignorée : %s", exc)
 
     def _query_collection(
         self,
@@ -67,24 +80,24 @@ class LegalRetriever:
         k: int = TOP_K,
         include_uploads: bool = False,
     ) -> list[LegalChunk]:
-        """Recherche sémantique.
+        """Recherche sémantique ou hybride (dense + BM25 + RRF) selon configuration."""
+        if self._hybrid is not None:
+            try:
+                from src.retrieval.query_rewriter import rewrite_queries
 
-        :param query: question de l'utilisateur
-        :param domaine: clé de domaine (``travail``/``foncier``/``famille``) ou None
-        :param k: nombre de résultats final
-        :param include_uploads: si True, fusionne les résultats de la collection
-            ``droit_gabonais_uploads`` (PDFs uploadés à la volée, si présente)
-        """
-        where: dict[str, Any] | None = {"domaine": domaine} if domaine else None
-        query_embedding = embed_query(query)
-
-        chunks = self._query_collection(self._collection, query_embedding, k, where)
+                rq = rewrite_queries(query)
+                extra = [q for q in rq.get("queries", []) if q and q != query]
+                chunks = self._hybrid.search(query, domaine=domaine, k=k, extra_queries=extra)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("Hybrid search échoué, fallback dense : %s", exc)
+                chunks = self._dense_search(query, domaine, k)
+        else:
+            chunks = self._dense_search(query, domaine, k)
 
         if include_uploads:
             upload_collection = _get_upload_collection(self._client)
             if upload_collection is not None:
-                # Pas de filtre domaine sur les uploads : l'utilisateur a uploadé
-                # un doc pour cette session, on veut tout voir.
+                query_embedding = embed_query(query)
                 upload_chunks = self._query_collection(
                     upload_collection, query_embedding, k, where=None
                 )
@@ -92,16 +105,60 @@ class LegalRetriever:
 
         return chunks
 
+    def _dense_search(
+        self,
+        query: str,
+        domaine: str | None,
+        k: int,
+    ) -> list[LegalChunk]:
+        where: dict[str, Any] | None = {"domaine": domaine} if domaine else None
+        query_embedding = embed_query(query)
+        return self._query_collection(self._collection, query_embedding, k, where)
+
     def get_article(
         self,
         article: str,
         domaine: str | None = None,
     ) -> list[LegalChunk]:
-        """Recherche un article spécifique par son numéro dans les métadonnées.
+        """Résout un article via ``sources.db`` si disponible, sinon métadonnées Chroma."""
+        try:
+            from src.storage.source_registry import SourceRegistry
 
-        :param article: numéro ou nom de l'article (ex: ``"72"``, ``"Article 75"``)
-        :param domaine: filtre de domaine optionnel
-        """
+            reg = SourceRegistry()
+            needle = re.sub(r"article\s*", "", article, flags=re.IGNORECASE).strip() or article
+            ids = reg.list_article_ids_by_num_substring(needle, limit=12)
+            out: list[LegalChunk] = []
+            for aid in ids:
+                rec = reg.get_by_id(aid)
+                if rec is None:
+                    continue
+                meta = {
+                    "source": rec.source_doc,
+                    "article": rec.article_num,
+                    "article_num": rec.article_num,
+                    "article_id": rec.article_id,
+                    "logical_article_id": rec.article_id,
+                    "livre": rec.livre or "",
+                    "titre": rec.titre or "",
+                    "chapitre": rec.chapitre or "",
+                    "page": rec.page_start or 0,
+                    "source_doc": rec.source_doc,
+                    "pdf_path": rec.pdf_path or "",
+                    "url": rec.url_source or "",
+                    "hierarchy_key": " > ".join(
+                        x for x in (rec.livre, rec.titre, rec.chapitre, rec.article_num) if x
+                    ),
+                    "source_type": "pdf" if rec.pdf_path else "web",
+                    "domaine": "",
+                }
+                if domaine and meta.get("domaine") == "":
+                    pass
+                out.append(LegalChunk(text=rec.full_text, metadata=meta, score=1.0))
+            if out:
+                return out
+        except Exception as exc:  # noqa: BLE001
+            log.debug("get_article SQLite : %s", exc)
+
         match = re.search(r"\d+", article)
         if not match:
             return []
@@ -117,10 +174,9 @@ class LegalRetriever:
         chunks: list[LegalChunk] = []
         for text, meta in zip(documents, metadatas):
             article_field = (meta or {}).get("article", "")
-            if re.search(rf"\b{numero}\b", article_field):
-                chunks.append(
-                    LegalChunk(text=text, metadata=meta or {}, score=1.0)
-                )
+            article_num_field = (meta or {}).get("article_num", "")
+            if re.search(rf"\b{numero}\b", f"{article_field} {article_num_field}"):
+                chunks.append(LegalChunk(text=text, metadata=meta or {}, score=1.0))
         return chunks
 
 

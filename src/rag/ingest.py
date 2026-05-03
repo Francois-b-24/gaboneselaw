@@ -31,6 +31,7 @@ from src.config import (
     DOMAINES,
     PDF_DIR,
     PDF_MANIFEST_FILE,
+    USE_LEGAL_PIPELINE,
     WEB_SOURCES_FILE,
 )
 from src.rag.embeddings import E5EmbeddingFunction
@@ -183,6 +184,25 @@ def _ingest_web(collection) -> int:
 
 
 def main() -> int:
+    if USE_LEGAL_PIPELINE:
+        from src.ingestion.pipeline import run_legal_ingest_pipeline
+        from src.storage.source_registry import SourceRegistry
+
+        registry = SourceRegistry()
+        total = run_legal_ingest_pipeline(
+            registry=registry,
+            chroma_path=CHROMA_PATH,
+            clear_registry=True,
+            enrich=True,
+        )
+        if total == 0:
+            print("[ERREUR] Aucun chunk indexé (pipeline légal).", file=sys.stderr)
+            return 1
+        print(f"\n✅ {total} chunks (pipeline légal) dans '{COLLECTION_NAME}'.")
+        print(f"   Persistance : {CHROMA_PATH}")
+        print(f"   SQLite : {registry.db_path}")
+        return 0
+
     client = chromadb.PersistentClient(path=CHROMA_PATH)
 
     try:

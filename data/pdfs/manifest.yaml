@@ -16,7 +16,11 @@
 
 - file: travail_1.pdf
   domaine: travail
-  source: "MEMENTO THEMATIQUE, Christophe Adrien RELONGOUE, Conseil Juridique Inscrit, Conseil Fiscal Agréé CEMAC, Editon 2013"
+  source: "MEMENTO THEMATIQUE DE DROIT DU TRAVAIL, DE FISCALITE DES SALAIRES ET DE SECURITE SOCIALE"
+
+- file: travail_1.pdf
+  domaine: fiscalite
+  source: "MEMENTO THEMATIQUE DE DROIT DU TRAVAIL, DE FISCALITE DES SALAIRES ET DE SECURITE SOCIALE"
 
 - file: code-travail-2021.pdf
   domaine: travail
