@@ -419,10 +419,10 @@ export default function LandingPage() {
     {
       id: "hero",
       badge: "Accueil",
-      title: "Rendre le droit gabonais",
-      subtitle: "clair et accessible",
+      title: "Rendre le droit africain",
+      subtitle: "clair, utile et partagé",
       description:
-        "African Legal Innovation Network transforme l'information juridique en un langage compréhensible, fiable et utile pour la vie quotidienne.",
+        "African Legal Innovation Network vulgarise et connecte les informations juridiques à travers le continent, pour un langage accessible, fiable et ancré dans les réalités africaines.",
       align: "left",
       actions: [
         {
