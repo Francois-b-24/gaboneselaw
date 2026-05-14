@@ -103,7 +103,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         paragraphs: [
           "Une IA utile en droit doit rester transparente sur ses sources, ses limites et son périmètre d'usage.",
         ],
-        link: { label: "Tester le chatbot", href: "/chatbot" },
       },
     ],
   },

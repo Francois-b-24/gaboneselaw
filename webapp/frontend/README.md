@@ -35,55 +35,9 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Chat architecture
+## Local run with FastAPI backend (optional)
 
-The chatbot appelle en **same-origin** `POST /api/chat` (Next.js). La route
-relaye vers le backend FastAPI (`NEXT_PUBLIC_API_BASE_URL` + `/api/chat`), ce
-qui évite les blocages **CORS** du navigateur. `POST /api/session/clear` est
-relayé de la même façon.
-
-## Frontend environment variables
-
-Required:
-
-- `NEXT_PUBLIC_API_BASE_URL` (example local: `http://localhost:8000`)
-
-After changing environment variables on your hosting platform (Vercel or similar),
-trigger a new deployment so runtime picks up the updated values.
-
-## Backend requirements reminder
-
-The backend service must provide:
-
-- `POST /api/chat` with `answer`, `sources`, and `quality` fields.
-- RAG + LLM configuration (Anthropic key/model, vector store, CORS) on the
-  backend deployment platform (Render).
-
-## Local startup checklist
-
-Run backend first, then frontend.
-
-1. Backend (from `/Users/f.b/dev/first`):
-
-```bash
-python3 -m pip install -r requirements.txt
-python3 -m uvicorn webapp.main:app --host 127.0.0.1 --port 8000
-```
-
-2. Backend health checks:
-
-```bash
-curl "http://127.0.0.1:8000/api/suggested-questions"
-curl -X POST "http://127.0.0.1:8000/api/chat" -H "Content-Type: application/json" -d '{"question":"Test"}'
-```
-
-3. Frontend (from `/Users/f.b/dev/first/webapp/frontend`):
-
-```bash
-npm run dev
-```
-
-If the chatbot loader spins forever or errors:
-- ensure no stale process is blocking port 8000,
-- restart backend after env changes,
-- confirm `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` in `.env.local`.
+Le site marketing Next peut être lancé seul (`npm run dev`). Si vous servez aussi
+l’API FastAPI du monorepo (autre port, ex. 8000), configurez CORS côté backend
+(`FRONTEND_ORIGINS` dans `.env` du projet racine). L’ancienne intégration chatbot
+Next est archivée sous `archive/chatbot-next-removal/`.

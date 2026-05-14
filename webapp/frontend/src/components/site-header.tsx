@@ -13,7 +13,6 @@ const NAV_ITEMS = [
   { href: "/a-propos", label: "À propos" },
   { href: "/manifeste", label: "Manifeste" },
   { href: "/blog", label: "Blog" },
-  { href: "/chatbot", label: "Ama'IA" },
   { href: "/contacts", label: "Contacts" },
 ] as const;
 

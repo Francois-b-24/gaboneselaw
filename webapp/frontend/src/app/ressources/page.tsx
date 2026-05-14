@@ -1,5 +1,3 @@
-import { TranslatedLink } from "@/components/translated-link";
-
 const ITEMS = [
   {
     title: "IA et responsabilité juridique",
@@ -52,24 +50,6 @@ export default function RessourcesPage() {
             <p className="mt-3 text-xs text-[color:var(--primary)]">{item.level}</p>
           </article>
         ))}
-      </section>
-      <section className="surface mt-10 rounded-2xl p-6">
-        <p className="text-muted text-xs font-semibold uppercase tracking-[0.14em]">
-          Besoin d&apos;un cas concret ?
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold">
-          Passez de la théorie à votre situation.
-        </h2>
-        <p className="text-muted mt-3 max-w-3xl">
-          Utilisez le chatbot pour poser votre problème juridique en langage
-          simple. Vous obtiendrez une réponse structurée, puis une synthèse ou un
-          rapport si nécessaire.
-        </p>
-        <div className="mt-5">
-          <TranslatedLink href="/chatbot" className="btn-primary rounded-md px-4 py-2 text-sm">
-            Aller vers le chatbot
-          </TranslatedLink>
-        </div>
       </section>
     </main>
   );

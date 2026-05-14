@@ -23,7 +23,6 @@ export function SiteFooter() {
             <li><TranslatedLink href="/a-propos" className="hover:underline">À propos</TranslatedLink></li>
             <li><TranslatedLink href="/manifeste" className="hover:underline">Manifeste</TranslatedLink></li>
             <li><TranslatedLink href="/blog" className="hover:underline">Blog</TranslatedLink></li>
-            <li><TranslatedLink href="/chatbot" className="hover:underline">Ama&apos;IA</TranslatedLink></li>
             <li><TranslatedLink href="/contacts" className="hover:underline">Contacts</TranslatedLink></li>
           </ul>
         </section>

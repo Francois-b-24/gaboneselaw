@@ -469,22 +469,6 @@ export default function LandingPage() {
       ],
     },
     {
-      id: "chatbot",
-      badge: "Chatbot",
-      title: "Un assistant IA juridique",
-      subtitle: "centré sur le Gabon",
-      description:
-        "Pose tes questions et obtiens une réponse structurée pour mieux comprendre tes droits, avec une approche pédagogique orientée vers le droit gabonais.",
-      align: "left",
-      actions: [
-        {
-          label: "Ouvrir le chatbot",
-          variant: "primary",
-          onClick: () => goTo("/chatbot"),
-        },
-      ],
-    },
-    {
       id: "contacts",
       badge: "Contacts",
       title: "Parlons de vos besoins",
