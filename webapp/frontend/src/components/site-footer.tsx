@@ -9,10 +9,10 @@ export function SiteFooter() {
     >
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 md:grid-cols-3">
         <section>
-          <p className="text-sm font-semibold">Ama&apos;IA</p>
+          <p className="text-sm font-semibold">ALIN</p>
           <p className="text-muted mt-2 text-sm leading-relaxed">
-            Rendre le droit gabonais accessible par l&apos;innovation, avec des réponses
-            pédagogiques et responsables.
+            African Legal Innovation Network — réseau pour l&apos;innovation juridique et
+            l&apos;accès au droit en Afrique francophone.
           </p>
         </section>
 
@@ -38,7 +38,7 @@ export function SiteFooter() {
         style={{ borderColor: "var(--border)" }}
       >
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 Ama&apos;IA. Tous droits réservés.</p>
+          <p>© 2026 African Legal Innovation Network. Tous droits réservés.</p>
           <div className="flex flex-wrap gap-3">
             <TranslatedLink href="/mentions-legales" className="hover:underline">Mentions légales</TranslatedLink>
             <TranslatedLink href="/confidentialite" className="hover:underline">Confidentialité</TranslatedLink>

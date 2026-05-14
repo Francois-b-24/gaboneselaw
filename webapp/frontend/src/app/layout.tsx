@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ALIN - African Legal Innovation Network",
-  description: "Rendre le droit gabonais plus accessible grace a un assistant juridique clair et responsable.",
+  description:
+    "Vulgariser et connecter le droit africain : informations juridiques accessibles, fiables et ancrées dans les réalités du continent.",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
