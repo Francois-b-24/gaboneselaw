@@ -1,39 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f3f7fc;
-  --foreground: #1b2b45;
-  --surface: #ffffff;
-  --surface-muted: #edf3fb;
-  --border: #cfdced;
-  --primary: #b78a2b;
-  --primary-foreground: #fffdf7;
-  --muted-foreground: #526583;
-}
+/*
+ * Palette ALIN — famille visuelle LexGabon (ivoire/encre) + accent terra ALIN.
+ * Tailwind v4 : les tokens @theme génèrent les utilitaires (bg-paper, text-terra, ...).
+ */
+@theme {
+  /* Partagé avec LexGabon */
+  --color-ink: #0a0a0a;
+  --color-paper: #faf8f3;
+  --color-paper-warm: #f2efe7;
+  --color-muted: #6b6b6b;
+  --color-border-soft: #e5e0d5;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Spécifique ALIN (identité distincte) */
+  --color-terra: #9c4a2e;
+  --color-terra-deep: #6b3220;
+  --color-terra-light: #c97052;
+  --color-savanna: #c9a77a;
+
+  --font-serif: var(--font-serif);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --tracking-eyebrow: 0.25em;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #edf3fb;
-    --foreground: #1b2b45;
-    --surface: #ffffff;
-    --surface-muted: #e8eff9;
-    --border: #c7d7eb;
-    --primary: #b78a2b;
-    --primary-foreground: #fffdf7;
-    --muted-foreground: #4f627f;
+/*
+ * Variables héritées : remappées sur la nouvelle palette pour que les pages non encore
+ * refondues restent cohérentes (terra/ivoire) en attendant les phases 2–4. À retirer une
+ * fois toutes les références (.surface, .btn-*, --primary) migrées.
+ */
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --surface: #ffffff;
+  --surface-muted: var(--color-paper-warm);
+  --border: var(--color-border-soft);
+  --primary: var(--color-terra);
+  --primary-foreground: var(--color-paper);
+  --muted-foreground: var(--color-muted);
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif), Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-terra) 20%, transparent);
+    color: var(--color-ink);
+  }
+}
+
+@layer utilities {
+  .eyebrow {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    font-size: 0.75rem;
+    color: var(--color-muted);
+  }
+  /* Différence clé avec LexGabon : italique d'accent colorée en terra. */
+  .accent-italic {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--color-terra);
+  }
+  .hexagram::before {
+    content: "❖";
+    color: color-mix(in srgb, var(--color-terra) 60%, transparent);
+    margin-right: 0.75rem;
+    display: inline-block;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   /* Header fixe : 2 lignes sur mobile (marque + langue, puis menu), 1 ligne sm+ */
   padding-top: 7.5rem;
