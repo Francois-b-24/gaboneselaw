@@ -1,22 +1,37 @@
 import { ContactForm } from "@/components/contact-form";
 import { SocialLinks } from "@/components/social-links";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { SectionTitle } from "@/components/ui/section-title";
 
 export default function ContactsPage() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-3 py-10 sm:px-4 sm:py-12">
-      <h1 className="text-2xl font-semibold sm:text-3xl">Contact</h1>
-      <p className="text-muted mt-4">
-        Pour toute question sur le projet, les contenus pédagogiques, ou pour
-        proposer une source juridique officielle, vous pouvez nous contacter.
-      </p>
-      <ContactForm />
-      <section className="surface mt-6 rounded-xl p-5">
-        <h2 className="text-lg font-medium">Suivez-nous</h2>
-        <p className="text-muted mt-2 text-sm">
-          Retrouvez nos actualités et nos contenus pédagogiques sur nos réseaux.
+    <main className="mx-auto w-full max-w-7xl px-6 pt-20">
+      <header className="border-b border-border-soft pb-16">
+        <Eyebrow>Nous joindre</Eyebrow>
+        <SectionTitle accent="ou une question institutionnelle." size="lg">
+          Une démonstration, un partenariat,
+        </SectionTitle>
+        <p className="mt-12 max-w-2xl text-lg leading-relaxed text-muted">
+          Pour toute question sur le réseau, les contenus pédagogiques, ou pour
+          proposer une source juridique officielle, notre équipe reste
+          disponible.
         </p>
-        <SocialLinks className="mt-4 flex flex-wrap gap-3 text-[color:var(--foreground)]" />
-      </section>
+      </header>
+
+      <div className="grid grid-cols-1 gap-16 py-20 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <ContactForm />
+        </div>
+
+        <aside className="lg:col-span-2">
+          <p className="eyebrow mb-6">Suivez-nous</p>
+          <p className="max-w-sm text-[15px] leading-relaxed text-muted">
+            Retrouvez nos actualités et nos contenus pédagogiques sur nos
+            réseaux.
+          </p>
+          <SocialLinks className="mt-6 flex flex-wrap gap-3" />
+        </aside>
+      </div>
     </main>
   );
 }

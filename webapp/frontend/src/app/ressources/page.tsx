@@ -1,7 +1,11 @@
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { FeatureCard } from "@/components/ui/feature-card";
+import { SectionTitle } from "@/components/ui/section-title";
+
 const ITEMS = [
   {
     title: "IA et responsabilité juridique",
-    text: "Comprendre qui est responsable en cas d’erreur d’un système d’IA et comment documenter les décisions.",
+    text: "Comprendre qui est responsable en cas d'erreur d'un système d'IA et comment documenter les décisions.",
     level: "Lecture 6 min",
   },
   {
@@ -11,12 +15,12 @@ const ITEMS = [
   },
   {
     title: "Automatisation et droit du travail",
-    text: "Impacts potentiels de l’IA sur l’emploi, le contrôle des salariés et les obligations de l’employeur.",
+    text: "Impacts potentiels de l'IA sur l'emploi, le contrôle des salariés et les obligations de l'employeur.",
     level: "Lecture 8 min",
   },
   {
     title: "Contrats numériques",
-    text: "Clauses essentielles pour sécuriser une prestation digitale, une licence logicielle ou un usage d’IA.",
+    text: "Clauses essentielles pour sécuriser une prestation digitale, une licence logicielle ou un usage d'IA.",
     level: "Lecture 5 min",
   },
   {
@@ -33,22 +37,26 @@ const ITEMS = [
 
 export default function RessourcesPage() {
   return (
-    <main className="mx-auto w-full max-w-6xl px-3 py-10 sm:px-4 sm:py-12">
-      <h1 className="text-2xl font-semibold sm:text-3xl">Ressources pédagogiques</h1>
-      <p className="text-muted mt-3 max-w-3xl">
-        Cette section propose des contenus de vulgarisation sur l&apos;IA et le droit,
-        avec un focus sur les enjeux pratiques pour les citoyens et les PME.
-      </p>
-      <section className="mt-8 grid gap-4 md:grid-cols-3">
+    <main className="mx-auto w-full max-w-7xl px-6 pt-20">
+      <header className="border-b border-border-soft pb-16">
+        <Eyebrow>Ressources pédagogiques</Eyebrow>
+        <SectionTitle accent="pour les citoyens et les PME." size="xl">
+          Vulgariser l&apos;IA et le droit,
+        </SectionTitle>
+        <p className="mt-12 max-w-2xl text-lg leading-relaxed text-muted">
+          Des contenus de vulgarisation sur l&apos;IA et le droit, avec un focus
+          sur les enjeux pratiques pour les citoyens et les entreprises.
+        </p>
+      </header>
+
+      <section className="grid grid-cols-1 gap-12 py-20 md:grid-cols-3">
         {ITEMS.map((item) => (
-          <article
+          <FeatureCard
             key={item.title}
-            className="surface rounded-xl p-5"
-          >
-            <h2 className="text-lg font-medium">{item.title}</h2>
-            <p className="text-muted mt-2 text-sm">{item.text}</p>
-            <p className="mt-3 text-xs text-[color:var(--primary)]">{item.level}</p>
-          </article>
+            title={item.title}
+            description={item.text}
+            tags={[item.level]}
+          />
         ))}
       </section>
     </main>

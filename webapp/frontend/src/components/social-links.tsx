@@ -24,7 +24,7 @@ export function SocialLinks({ className }: SocialLinksProps) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Suivez-nous sur ${social.name}`}
-          className="surface-muted inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary)] focus-visible:ring-offset-2"
+          className="inline-flex h-11 w-11 items-center justify-center border border-border-soft text-ink transition-colors hover:border-terra/40 hover:text-terra focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terra focus-visible:ring-offset-2"
         >
           <SocialIcon icon={social.icon} />
         </a>
