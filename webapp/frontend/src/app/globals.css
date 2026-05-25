@@ -87,7 +87,7 @@ body {
   color: var(--color-ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   /* Header fixe : 2 lignes sur mobile (marque + langue, puis menu), 1 ligne sm+ */
-  padding-top: 7.5rem;
+  padding-top: 7rem;
   overflow-x: hidden;
   /* Google Translator banner masquée : évite le décalage vertical */
   top: 0 !important;
