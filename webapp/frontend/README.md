@@ -1,43 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ALIN — alin-africa.com
 
-## Getting Started
+Site éditorial d'**ALIN (African Legal Innovation Network)**, réseau panafricain
+d'innovation juridique et maison-mère de l'initiative [LexGabon](https://www.lexgabon.com).
 
-First, run the development server:
+Le site partage la grammaire visuelle de LexGabon (typographie serif éditoriale,
+palette ivoire/encre, italiques d'accent) tout en conservant une identité ALIN
+distincte : **accent terre cuite `#9C4A2E`** et glyphe **❖** (là où LexGabon
+utilise un vert sombre et le glyphe ◇).
+
+## Stack
+
+| | |
+|---|---|
+| Framework | **Next.js 16** (App Router, React 19) |
+| Styles | **Tailwind CSS v4** — config CSS-first via `@theme` dans `src/app/globals.css` (pas de `tailwind.config`) |
+| i18n | **next-intl 4** — FR (défaut, sans préfixe) + EN (`/en/…`) |
+| Polices | `next/font` — Fraunces (serif), Geist / Geist Mono |
+| Contenu | données typées dans `src/data/`, UI dans `messages/{fr,en}.json` |
+
+> ⚠️ Next.js 16 introduit des changements de conventions par rapport aux versions
+> antérieures (voir `AGENTS.md`). Notamment : le middleware s'appelle désormais
+> `proxy` et, ce projet utilisant `src/`, il **doit** vivre dans `src/proxy.ts`.
+
+## Démarrer
+
+Prérequis : Node 20+ (développé sous Node 24).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Autres scripts :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build    # build de production
+npm run start    # sert le build de production
+npm run lint     # ESLint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variables d'environnement
 
-## Learn More
+Copier `.env.local.example` vers `.env.local`. Toutes optionnelles (des valeurs
+par défaut sont utilisées si absentes) :
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Rôle | Défaut |
+|---|---|---|
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Destinataire du formulaire de contact (lien `mailto:`) | `felicia.oi@alin-africa.com` |
+| `NEXT_PUBLIC_API_BASE_URL` | Backend FastAPI du monorepo, si servi (optionnel) | `http://localhost:8000` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├─ app/
+│  ├─ [locale]/          # toutes les pages, segmentées par locale
+│  │  ├─ layout.tsx      # <html lang>, polices, provider next-intl, Schema.org
+│  │  ├─ page.tsx        # accueil
+│  │  ├─ manifeste/ blog/ a-propos/ contacts/ ressources/ …
+│  ├─ layout.tsx         # racine (passe-plat)
+│  ├─ globals.css        # tokens @theme + utilitaires (.eyebrow, .accent-italic, .prose-editorial)
+│  ├─ sitemap.ts robots.ts
+├─ components/
+│  ├─ ui/                # Eyebrow, SectionTitle, FeatureCard, StatBlock
+│  ├─ site-header.tsx site-footer.tsx locale-switcher.tsx …
+├─ data/                 # blog-articles.ts, manifesto.ts (contenu long-form bilingue)
+├─ i18n/                 # routing.ts, navigation.ts, request.ts
+├─ proxy.ts              # middleware next-intl (négociation de locale)
+messages/                # fr.json, en.json (chaînes UI)
+```
 
-## Deploy on Vercel
+## Internationalisation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Locales dans `src/i18n/routing.ts` (`localePrefix: "as-needed"`).
+- **Chaînes UI** → `messages/fr.json` + `messages/en.json` (les deux doivent
+  avoir des clés identiques).
+- **Contenu long-form** (manifeste, articles) → `src/data/`, dictionnaires par
+  locale avec repli sur le français.
+- Navigation interne : utiliser `Link` / `useRouter` / `redirect` depuis
+  `@/i18n/navigation` (jamais `next/link` directement) pour préserver la locale.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Identité de design
 
-## Local run with FastAPI backend (optional)
+Tokens et utilitaires dans `src/app/globals.css`. Pour une nouvelle section, suivre
+le motif **Eyebrow → SectionTitle (avec `accent` en italique terra) → texte muted**.
+Ne pas introduire le glyphe ◇ ni d'accent autre que `terra` côté ALIN. Les liens
+externes (`↗`) doivent porter un `aria-label` et `rel="noopener noreferrer"`.
 
-Le site marketing Next peut être lancé seul (`npm run dev`). Si vous servez aussi
-l’API FastAPI du monorepo (autre port, ex. 8000), configurez CORS côté backend
-(`FRONTEND_ORIGINS` dans `.env` du projet racine). L’ancienne intégration chatbot
-Next est archivée sous `archive/chatbot-next-removal/`.
+## Monorepo
+
+Ce site vit sous `webapp/frontend/` d'un dépôt qui contient aussi un pipeline RAG
+Python (`src/`, `webapp/main.py`). Le site peut être lancé seul ; il ne dépend du
+backend FastAPI que si l'on branche `NEXT_PUBLIC_API_BASE_URL`. L'ancienne
+intégration chatbot Next est archivée sous `archive/`.
