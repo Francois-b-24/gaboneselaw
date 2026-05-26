@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -83,12 +84,14 @@ function ArticleContent({ locale, slug }: { locale: string; slug: string }) {
         </p>
       </header>
 
-      <div className="mt-12 aspect-[16/7] overflow-hidden border border-border-soft bg-paper-warm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative mt-12 aspect-[16/7] overflow-hidden border border-border-soft bg-paper-warm">
+        <Image
           src={article.coverImage}
           alt={article.coverAlt}
-          className="h-full w-full object-cover"
+          fill
+          priority
+          sizes="(max-width: 1280px) 100vw, 1280px"
+          className="object-cover"
         />
       </div>
 
@@ -158,13 +161,13 @@ function ArticleContent({ locale, slug }: { locale: string; slug: string }) {
                 href={`/blog/${item.slug}`}
                 className="group block no-underline"
               >
-                <div className="aspect-[4/5] overflow-hidden border border-border-soft bg-paper-warm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="relative aspect-[4/5] overflow-hidden border border-border-soft bg-paper-warm">
+                  <Image
                     src={item.coverImage}
                     alt={item.coverAlt}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 </div>
                 <p className="eyebrow mt-6 mb-3">

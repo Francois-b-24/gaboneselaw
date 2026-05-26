@@ -1,5 +1,6 @@
-export type Locale = "fr" | "en";
+type Locale = "fr" | "en";
 
+// Exporté : fait partie de l'API publique via LocalizedBlogArticle.sections.
 export type BlogSection = {
   heading: string;
   level?: "h2" | "h3";
