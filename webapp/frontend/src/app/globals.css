@@ -53,6 +53,10 @@
     font-family: var(--font-serif), Georgia, serif;
     font-weight: 400;
     letter-spacing: -0.02em;
+    /* Titres serif XXL : empêche un mot long (« intelligence ») de déborder
+       horizontalement sur mobile. Césure seulement si nécessaire. */
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   ::selection {
     background: color-mix(in srgb, var(--color-terra) 20%, transparent);

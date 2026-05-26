@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -164,7 +165,15 @@ function HomeContent({ locale }: { locale: string }) {
             href={`/blog/${featured.slug}`}
             className="group mt-20 grid grid-cols-1 gap-8 no-underline md:grid-cols-5"
           >
-            <div className="aspect-[4/3] border border-border-soft bg-paper-warm md:col-span-3" />
+            <div className="relative aspect-[4/3] overflow-hidden border border-border-soft bg-paper-warm md:col-span-3">
+              <Image
+                src={featured.coverImage}
+                alt={featured.coverAlt}
+                fill
+                sizes="(max-width: 768px) 100vw, 60vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              />
+            </div>
             <div className="flex flex-col justify-center md:col-span-2">
               <p className="eyebrow mb-4">
                 {featured.category} · {featured.readTime}
