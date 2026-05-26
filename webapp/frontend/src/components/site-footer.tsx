@@ -3,7 +3,6 @@ import { Link } from "@/i18n/navigation";
 
 export function SiteFooter() {
   const t = useTranslations("Footer");
-  const nav = useTranslations("Nav");
 
   return (
     <footer className="mt-32 border-t border-border-soft px-6 pb-12 pt-20">
@@ -23,24 +22,15 @@ export function SiteFooter() {
             <p className="eyebrow mb-6">{t("network")}</p>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/a-propos" className="hover:text-terra">
-                  {nav("about")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/manifeste" className="hover:text-terra">
-                  {nav("manifesto")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="hover:text-terra">
-                  {nav("blog")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacts" className="hover:text-terra">
-                  {nav("contacts")}
-                </Link>
+                <a
+                  href="https://www.linkedin.com/company/alin-african-legal-innovation-network"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("linkedinAria")}
+                  className="hover:text-terra"
+                >
+                  LinkedIn <span aria-hidden>↗</span>
+                </a>
               </li>
             </ul>
           </div>
@@ -77,15 +67,6 @@ export function SiteFooter() {
             <Link href="/cgu" className="hover:text-terra">
               {t("terms")}
             </Link>
-            <a
-              href="https://www.linkedin.com/company/alin-african-legal-innovation-network"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t("linkedinAria")}
-              className="hover:text-terra"
-            >
-              LinkedIn <span aria-hidden>↗</span>
-            </a>
           </div>
         </div>
       </div>
