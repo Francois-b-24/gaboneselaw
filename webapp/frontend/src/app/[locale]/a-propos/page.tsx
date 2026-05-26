@@ -38,9 +38,9 @@ function AboutContent() {
     <main className="mx-auto w-full max-w-7xl px-6 pt-20">
       <header className="border-b border-border-soft pb-16">
         <Eyebrow>{t("eyebrow")}</Eyebrow>
-        <h1 className="font-serif text-6xl leading-[0.95] tracking-tight md:text-8xl">
+        <h1 className="font-serif text-4xl leading-[1.1] tracking-tight md:text-6xl lg:text-8xl">
           {t("title")}
-          <em className="accent-italic mt-2 block text-4xl md:text-5xl">
+          <em className="accent-italic mt-2 block text-2xl md:text-3xl">
             {t("accent")}
           </em>
         </h1>

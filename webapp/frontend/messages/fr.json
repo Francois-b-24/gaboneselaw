@@ -6,6 +6,7 @@
   },
   "Nav": {
     "tagline": "African Legal Innovation Network",
+    "home": "Accueil",
     "about": "À propos",
     "manifesto": "Manifeste",
     "blog": "Blog",
@@ -116,7 +117,8 @@
     "email": "Votre adresse email",
     "subject": "Objet (optionnel)",
     "message": "Votre message",
-    "submit": "Ouvrir ma messagerie"
+    "submit": "Ouvrir ma messagerie",
+    "requiredNote": "Votre messagerie ne s'ouvrira qu'une fois le nom, l'email et le message renseignés."
   },
   "Resources": {
     "eyebrow": "Ressources pédagogiques",

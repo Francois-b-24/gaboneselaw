@@ -81,8 +81,7 @@ export function ContactForm() {
       {status === "error" && errorMessage && (
         <p
           role="alert"
-          className="border-l-2 pl-4 text-sm text-ink"
-          style={{ borderColor: "#b91c1c" }}
+          className="border-l-2 border-danger pl-4 text-sm text-ink"
         >
           {errorMessage}
         </p>
@@ -142,12 +141,15 @@ export function ContactForm() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="border-b border-ink pb-1 text-base transition-colors hover:border-terra hover:text-terra"
-      >
-        {t("submit")} →
-      </button>
+      <div className="space-y-3">
+        <button
+          type="submit"
+          className="border-b border-ink pb-1 text-base transition-colors hover:border-terra hover:text-terra"
+        >
+          {t("submit")} →
+        </button>
+        <p className="text-sm text-muted">{t("requiredNote")}</p>
+      </div>
     </form>
   );
 }

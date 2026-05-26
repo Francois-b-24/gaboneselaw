@@ -36,9 +36,9 @@ export default async function ManifestePage({
       {/* Hero court */}
       <header className="border-b border-border-soft pb-20">
         <Eyebrow>{m.eyebrow}</Eyebrow>
-        <h1 className="font-serif text-6xl leading-[0.95] tracking-tight md:text-8xl">
+        <h1 className="font-serif text-4xl leading-[1.1] tracking-tight md:text-6xl lg:text-8xl">
           {m.title}
-          <em className="accent-italic mt-2 block text-4xl md:text-5xl">
+          <em className="accent-italic mt-2 block text-2xl md:text-3xl">
             {m.accent}
           </em>
         </h1>

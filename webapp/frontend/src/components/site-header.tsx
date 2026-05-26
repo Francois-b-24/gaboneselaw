@@ -6,13 +6,17 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/a-propos", key: "about" },
+  { href: "/", key: "home" },
   { href: "/manifeste", key: "manifesto" },
   { href: "/blog", key: "blog" },
+  { href: "/a-propos", key: "about" },
   { href: "/contacts", key: "contacts" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
+  // "/" (Accueil) ne doit être actif que sur la home exacte, sinon startsWith
+  // matcherait toutes les routes.
+  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

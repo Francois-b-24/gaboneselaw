@@ -72,7 +72,7 @@ function ArticleContent({ locale, slug }: { locale: string; slug: string }) {
 
       <header className="mt-8 border-b border-border-soft pb-16">
         <Eyebrow>{article.category}</Eyebrow>
-        <h1 className="max-w-4xl font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl">
+        <h1 className="max-w-4xl font-serif text-4xl leading-[1.1] tracking-tight md:text-6xl lg:text-8xl">
           {article.title}
         </h1>
         <p className="eyebrow mt-8">
