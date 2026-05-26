@@ -1,61 +1,88 @@
+import type { Metadata } from "next";
+import { useTranslations } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { TranslatedLink } from "@/components/translated-link";
+import { Link } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { BLOG_ARTICLES, getBlogArticleBySlug } from "@/data/blog-articles";
+import {
+  getAllSlugs,
+  getLocalizedArticle,
+  getLocalizedArticles,
+} from "@/data/blog-articles";
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("fr-FR", {
+type Params = { locale: string; slug: string };
+
+export function generateStaticParams() {
+  return routing.locales.flatMap((locale) =>
+    getAllSlugs().map((slug) => ({ locale, slug })),
+  );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<Params>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const article = getLocalizedArticle(slug, locale);
+  if (!article) return {};
+  return { title: article.title, description: article.excerpt };
+}
+
+function formatDate(date: string, locale: string) {
+  return new Date(date).toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
 
-type BlogArticlePageProps = {
-  params: Promise<{ slug: string }>;
-};
-
-export function generateStaticParams() {
-  return BLOG_ARTICLES.map((article) => ({ slug: article.slug }));
-}
-
-export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
-  const { slug } = await params;
-  const article = getBlogArticleBySlug(slug);
-
-  if (!article) {
+export default async function BlogArticlePage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { locale, slug } = await params;
+  setRequestLocale(locale);
+  if (!getLocalizedArticle(slug, locale)) {
     notFound();
   }
+  return <ArticleContent locale={locale} slug={slug} />;
+}
 
-  const related = BLOG_ARTICLES.filter((a) => a.slug !== article.slug).slice(
-    0,
-    3,
-  );
+function ArticleContent({ locale, slug }: { locale: string; slug: string }) {
+  const t = useTranslations("Blog");
+  const article = getLocalizedArticle(slug, locale);
+  if (!article) notFound();
+
+  const related = getLocalizedArticles(locale)
+    .filter((a) => a.slug !== article.slug)
+    .slice(0, 3);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 pt-20">
-      <TranslatedLink
+      <Link
         href="/blog"
         className="eyebrow inline-block no-underline transition-colors hover:text-terra"
       >
-        ← Retour au journal
-      </TranslatedLink>
+        ← {t("back")}
+      </Link>
 
-      {/* Hero court */}
       <header className="mt-8 border-b border-border-soft pb-16">
         <Eyebrow>{article.category}</Eyebrow>
         <h1 className="max-w-4xl font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl">
           {article.title}
         </h1>
         <p className="eyebrow mt-8">
-          {formatDate(article.date)} · Lecture {article.readTime}
+          {formatDate(article.date, locale)} ·{" "}
+          {t("readingLabel", { time: article.readTime })}
         </p>
         <p className="mt-10 max-w-2xl text-lg leading-relaxed text-muted">
           {article.intro}
         </p>
       </header>
 
-      {/* Visuel pleine largeur */}
       <div className="mt-12 aspect-[16/7] overflow-hidden border border-border-soft bg-paper-warm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -65,7 +92,6 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         />
       </div>
 
-      {/* Corps long-form */}
       <article className="prose-editorial py-24">
         {article.sections.map((section) => {
           const HeadingTag = section.level === "h3" ? "h3" : "h2";
@@ -101,12 +127,12 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
 
               {section.link ? (
                 <p>
-                  <TranslatedLink
+                  <Link
                     href={section.link.href}
                     className="border-b border-ink pb-1 text-base no-underline transition-colors hover:border-terra hover:text-terra"
                   >
                     {section.link.label} →
-                  </TranslatedLink>
+                  </Link>
                 </p>
               ) : null}
             </section>
@@ -114,25 +140,20 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         })}
       </article>
 
-      {/* Bloc auteur */}
       <div className="prose-editorial border-t border-border-soft py-12">
-        <p className="eyebrow mb-3">Publié par</p>
-        <p className="font-serif text-2xl text-ink">
-          African Legal Innovation Network
-        </p>
+        <p className="eyebrow mb-3">{t("publishedBy")}</p>
+        <p className="font-serif text-2xl text-ink">{t("authorName")}</p>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
-          Le journal ALIN décrypte le droit africain et son innovation, pour un
-          accès clair, fiable et partagé.
+          {t("authorBio")}
         </p>
       </div>
 
-      {/* Articles liés */}
       {related.length > 0 ? (
         <section className="border-t border-border-soft py-20">
-          <Eyebrow>À lire aussi</Eyebrow>
+          <Eyebrow>{t("alsoRead")}</Eyebrow>
           <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-3">
             {related.map((item) => (
-              <TranslatedLink
+              <Link
                 key={item.slug}
                 href={`/blog/${item.slug}`}
                 className="group block no-underline"
@@ -152,7 +173,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
                 <h3 className="font-serif text-2xl leading-tight transition-colors group-hover:text-terra-deep">
                   {item.title}
                 </h3>
-              </TranslatedLink>
+              </Link>
             ))}
           </div>
         </section>

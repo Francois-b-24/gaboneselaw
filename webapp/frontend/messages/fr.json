@@ -1,0 +1,183 @@
+{
+  "Locale": {
+    "fr": "Français",
+    "en": "English",
+    "switchLabel": "Langue du site"
+  },
+  "Nav": {
+    "tagline": "African Legal Innovation Network",
+    "about": "À propos",
+    "manifesto": "Manifeste",
+    "blog": "Blog",
+    "contacts": "Contacts",
+    "menu": "Menu",
+    "choosePage": "Choisir une page",
+    "mainNav": "Navigation principale"
+  },
+  "Footer": {
+    "blurb": "African Legal Innovation Network — réseau panafricain dédié à l'innovation juridique et à l'accès au droit en Afrique francophone.",
+    "places": "Libreville · Paris · 2026",
+    "network": "Réseau",
+    "initiatives": "Initiatives",
+    "lexgabonAria": "LexGabon (ouvre un nouvel onglet)",
+    "rights": "© 2026 African Legal Innovation Network. Tous droits réservés.",
+    "legal": "Mentions légales",
+    "privacy": "Confidentialité",
+    "terms": "CGU",
+    "linkedinAria": "LinkedIn (ouvre un nouvel onglet)"
+  },
+  "Home": {
+    "heroEyebrow": "Réseau panafricain d'innovation juridique",
+    "heroTitle": "Rendre le droit africain",
+    "heroAccent": "clair, utile et partagé.",
+    "heroLede": "African Legal Innovation Network vulgarise et connecte les informations juridiques à travers le continent, pour un langage accessible, fiable et ancré dans les réalités africaines.",
+    "readManifesto": "Lire le manifeste",
+    "discoverLexgabon": "Découvrir LexGabon",
+    "discoverLexgabonAria": "Découvrir LexGabon (ouvre un nouvel onglet)",
+    "positionEyebrow": "Notre position",
+    "positionTitle": "Affirmer l'expertise juridique africaine",
+    "positionAccent": "à l'ère de l'intelligence artificielle.",
+    "positionLede": "Une affirmation publique de notre vision : un droit africain pensé, écrit et outillé par des juristes africains, augmenté par les technologies d'intelligence artificielle au service du continent.",
+    "readFullManifesto": "Lire le manifeste en intégralité",
+    "initiativesEyebrow": "Nos initiatives",
+    "initiativesTitle": "Des outils concrets,",
+    "initiativesAccent": "pour démocratiser l'accès au droit.",
+    "lexgabonTag": "Plateforme · République Gabonaise",
+    "lexgabonAccent": "Le droit applicable au Gabon, ouvert et structuré.",
+    "lexgabonDesc": "Plateforme de données juridiques ouvertes centralisant les textes applicables en République Gabonaise ainsi que les textes OHADA et CEMAC applicables au Gabon.",
+    "statTextsIndexed": "Textes indexés",
+    "statSources": "Sources officielles",
+    "statAccess": "Accès",
+    "statAccessValue": "Libre",
+    "accessLexgabon": "Accéder à lexgabon.com",
+    "accessLexgabonAria": "Accéder à lexgabon.com (ouvre un nouvel onglet)",
+    "comingSoon": "À venir",
+    "comingSoonTitle": "D'autres initiatives prennent forme.",
+    "comingSoonDesc": "ALIN développe progressivement de nouveaux outils pour étendre la couverture juridique à d'autres pays et matières.",
+    "figuresEyebrow": "Le réseau en chiffres",
+    "figuresTitle": "Un droit africain,",
+    "figuresAccent": "appliqué aux réalités du continent.",
+    "figCountries": "Pays visés à terme",
+    "figTexts": "Textes indexés via LexGabon",
+    "figAccess": "Accès aux ressources",
+    "figAccessValue": "Libre",
+    "figYear": "Année de lancement",
+    "journalEyebrow": "Le journal ALIN",
+    "journalTitle": "Comprendre le droit,",
+    "journalAccent": "appliqué aux réalités africaines.",
+    "allArticles": "Voir tous les articles",
+    "ctaTitle": "Contribuons ensemble",
+    "ctaAccent": "à l'innovation juridique africaine.",
+    "ctaLede": "Pour une démonstration, un partenariat ou une question institutionnelle, notre équipe reste disponible.",
+    "goContacts": "Accéder aux contacts"
+  },
+  "Blog": {
+    "eyebrow": "Le journal ALIN",
+    "title": "Comprendre le droit,",
+    "accent": "appliqué aux réalités africaines.",
+    "lede": "Analyses, décryptages et repères pratiques pour comprendre le droit gabonais et africain à l'ère de l'innovation juridique.",
+    "all": "Tous",
+    "back": "Retour au journal",
+    "readTimeShort": "{minutes} min",
+    "readingLabel": "Lecture {time}",
+    "publishedBy": "Publié par",
+    "authorName": "African Legal Innovation Network",
+    "authorBio": "Le journal ALIN décrypte le droit africain et son innovation, pour un accès clair, fiable et partagé.",
+    "alsoRead": "À lire aussi"
+  },
+  "About": {
+    "eyebrow": "Le réseau",
+    "title": "À propos",
+    "accent": "un réseau panafricain d'innovation juridique.",
+    "intro": "<strong>ALIN — African Legal Innovation Network</strong> est un réseau panafricain d'innovation juridique qui naît à partir d'un double constat :",
+    "point1": "l'intelligence artificielle redéfinit en profondeur les compétences et les modèles des professionnels du droit ;",
+    "point2": "et l'Afrique francophone reste encore à la marge des espaces où ces transformations se pensent et se régulent.",
+    "body": "Fondé par <strong>Félicia Ombanda Indoumou</strong>, Conseil juridique et fiscal agréée CEMAC, forte de plus de 13 ans d'expérience en droit des affaires OHADA et en conseil fiscal, ALIN est le réseau dédié à l'innovation juridique et technologique dans l'espace francophone, pour que les juristes africains ne subissent pas les mutations liées à la montée en puissance de l'intelligence artificielle, mais y prennent part activement.",
+    "portraitAlt": "Portrait de Félicia Ombanda Indoumou, fondatrice d'ALIN",
+    "linkedinAria": "Profil LinkedIn de Félicia Ombanda Indoumou (ouvre un nouvel onglet)"
+  },
+  "Contacts": {
+    "eyebrow": "Nous joindre",
+    "title": "Une démonstration, un partenariat,",
+    "accent": "ou une question institutionnelle.",
+    "lede": "Pour toute question sur le réseau, les contenus pédagogiques, ou pour proposer une source juridique officielle, notre équipe reste disponible.",
+    "followUs": "Suivez-nous",
+    "followDesc": "Retrouvez nos actualités et nos contenus pédagogiques sur nos réseaux.",
+    "followAria": "Suivez-nous sur {network} (ouvre un nouvel onglet)"
+  },
+  "ContactForm": {
+    "errRequired": "Nom, email et message sont requis.",
+    "errEmail": "Adresse email invalide.",
+    "errTooLong": "Le message est trop long pour s'ouvrir automatiquement dans la messagerie (limite d'environ {max} caractères). Réduisez le texte ou écrivez directement à {email}.",
+    "subjectFallback": "Contact site ALIN — {name}",
+    "bodyFrom": "De : {name} <{email}>",
+    "opened": "Si la messagerie ne s'est pas ouverte, vérifiez qu'un client mail est installé sur cet appareil, ou écrivez directement à",
+    "name": "Votre nom",
+    "email": "Votre adresse email",
+    "subject": "Objet (optionnel)",
+    "message": "Votre message",
+    "submit": "Ouvrir ma messagerie"
+  },
+  "Resources": {
+    "eyebrow": "Ressources pédagogiques",
+    "title": "Vulgariser l'IA et le droit,",
+    "accent": "pour les citoyens et les PME.",
+    "lede": "Des contenus de vulgarisation sur l'IA et le droit, avec un focus sur les enjeux pratiques pour les citoyens et les entreprises.",
+    "items": [
+      {
+        "title": "IA et responsabilité juridique",
+        "text": "Comprendre qui est responsable en cas d'erreur d'un système d'IA et comment documenter les décisions.",
+        "level": "Lecture 6 min"
+      },
+      {
+        "title": "Protection des données personnelles",
+        "text": "Bonnes pratiques pour traiter des données conformément au cadre légal et limiter les risques de non-conformité.",
+        "level": "Lecture 7 min"
+      },
+      {
+        "title": "Automatisation et droit du travail",
+        "text": "Impacts potentiels de l'IA sur l'emploi, le contrôle des salariés et les obligations de l'employeur.",
+        "level": "Lecture 8 min"
+      },
+      {
+        "title": "Contrats numériques",
+        "text": "Clauses essentielles pour sécuriser une prestation digitale, une licence logicielle ou un usage d'IA.",
+        "level": "Lecture 5 min"
+      },
+      {
+        "title": "Preuve et traçabilité",
+        "text": "Comment conserver des éléments probants dans un environnement numérique (emails, logs, versions, signatures).",
+        "level": "Lecture 6 min"
+      },
+      {
+        "title": "Conformité opérationnelle",
+        "text": "Mettre en place un socle simple : politiques internes, registres, gouvernance minimale et revue périodique.",
+        "level": "Lecture 9 min"
+      }
+    ]
+  },
+  "Manifesto": {
+    "eyebrow": "Notre position",
+    "title": "Manifeste",
+    "accent": "Affirmer l'expertise juridique africaine.",
+    "lede": "Une affirmation publique de notre vision : un droit africain pensé, écrit et outillé par des juristes africains, à l'ère de l'intelligence artificielle.",
+    "launch": "Lancement officiel · Libreville, 16 avril 2026 · Forum Cyber'Elles",
+    "footerName": "African Legal Innovation Network",
+    "footerPlace": "Libreville · 2026"
+  },
+  "Metadata": {
+    "siteName": "ALIN — African Legal Innovation Network",
+    "homeTitle": "ALIN — African Legal Innovation Network",
+    "homeDescription": "Vulgariser et connecter le droit africain : informations juridiques accessibles, fiables et ancrées dans les réalités du continent.",
+    "manifestoTitle": "Manifeste — ALIN",
+    "manifestoDescription": "Affirmer l'expertise juridique africaine à l'ère de l'intelligence artificielle.",
+    "blogTitle": "Le journal ALIN — Blog",
+    "blogDescription": "Analyses et décryptages du droit africain à l'ère de l'innovation juridique.",
+    "aboutTitle": "À propos — ALIN",
+    "aboutDescription": "ALIN, réseau panafricain d'innovation juridique fondé par Félicia Ombanda Indoumou.",
+    "contactsTitle": "Contacts — ALIN",
+    "contactsDescription": "Contacter African Legal Innovation Network pour une démonstration, un partenariat ou une question institutionnelle.",
+    "resourcesTitle": "Ressources pédagogiques — ALIN",
+    "resourcesDescription": "Contenus de vulgarisation sur l'IA et le droit pour les citoyens et les entreprises."
+  }
+}

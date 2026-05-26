@@ -1,38 +1,58 @@
-import { TranslatedLink } from "@/components/translated-link";
+import { useTranslations } from "next-intl";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { Link } from "@/i18n/navigation";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SectionTitle } from "@/components/ui/section-title";
-import { BLOG_ARTICLES } from "@/data/blog-articles";
+import { getLocalizedArticles } from "@/data/blog-articles";
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("fr-FR", {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Metadata" });
+  return { title: t("blogTitle"), description: t("blogDescription") };
+}
+
+function formatDate(date: string, locale: string) {
+  return new Date(date).toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
 
-export default function BlogPage() {
-  const [featured, ...rest] = BLOG_ARTICLES;
-  const categories = Array.from(
-    new Set(BLOG_ARTICLES.map((a) => a.category)),
-  );
+export default async function BlogPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  return <BlogContent locale={locale} />;
+}
+
+function BlogContent({ locale }: { locale: string }) {
+  const t = useTranslations("Blog");
+  const articles = getLocalizedArticles(locale);
+  const [featured, ...rest] = articles;
+  const categories = Array.from(new Set(articles.map((a) => a.category)));
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 pt-20">
-      {/* Hero court */}
       <header className="border-b border-border-soft pb-16">
-        <Eyebrow>Le journal ALIN</Eyebrow>
-        <SectionTitle accent="appliqué aux réalités africaines." size="xl">
-          Comprendre le droit,
+        <Eyebrow>{t("eyebrow")}</Eyebrow>
+        <SectionTitle accent={t("accent")} size="xl">
+          {t("title")}
         </SectionTitle>
         <p className="mt-12 max-w-2xl text-lg leading-relaxed text-muted">
-          Analyses, décryptages et repères pratiques pour comprendre le droit
-          gabonais et africain à l&apos;ère de l&apos;innovation juridique.
+          {t("lede")}
         </p>
 
-        {/* Filtres par catégorie en eyebrow inline */}
         <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2">
-          <span className="eyebrow text-ink">Tous</span>
+          <span className="eyebrow text-ink">{t("all")}</span>
           {categories.map((category) => (
             <span key={category} className="eyebrow">
               {category}
@@ -41,9 +61,8 @@ export default function BlogPage() {
         </div>
       </header>
 
-      {/* Article featured — 5 colonnes (3 image + 2 texte) */}
       {featured ? (
-        <TranslatedLink
+        <Link
           href={`/blog/${featured.slug}`}
           className="group mt-20 grid grid-cols-1 gap-8 no-underline md:grid-cols-5"
         >
@@ -58,7 +77,7 @@ export default function BlogPage() {
           </div>
           <div className="flex flex-col justify-center md:col-span-2">
             <p className="eyebrow mb-4">
-              {featured.category} · {formatDate(featured.date)} ·{" "}
+              {featured.category} · {formatDate(featured.date, locale)} ·{" "}
               {featured.readTime}
             </p>
             <h2 className="mb-4 font-serif text-3xl leading-tight transition-colors group-hover:text-terra-deep md:text-4xl">
@@ -66,13 +85,12 @@ export default function BlogPage() {
             </h2>
             <p className="leading-relaxed text-muted">{featured.excerpt}</p>
           </div>
-        </TranslatedLink>
+        </Link>
       ) : null}
 
-      {/* Grille 3 colonnes, ratio 4:5 */}
       <section className="mt-24 grid grid-cols-1 gap-12 border-t border-border-soft pt-20 md:grid-cols-3">
         {rest.map((article) => (
-          <TranslatedLink
+          <Link
             key={article.slug}
             href={`/blog/${article.slug}`}
             className="group block no-underline"
@@ -95,7 +113,7 @@ export default function BlogPage() {
             <p className="mt-3 text-[15px] leading-relaxed text-muted">
               {article.excerpt}
             </p>
-          </TranslatedLink>
+          </Link>
         ))}
       </section>
     </main>
