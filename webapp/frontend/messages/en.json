@@ -165,6 +165,15 @@
     "footerName": "African Legal Innovation Network",
     "footerPlace": "Libreville · 2026"
   },
+  "Legal": {
+    "eyebrow": "Legal information",
+    "cguTitle": "Terms of use",
+    "cguBody": "Page to be completed with the site's terms of use, liabilities, limitations and intellectual property.",
+    "privacyTitle": "Privacy policy",
+    "privacyBody": "Page to be completed with the data-processing policy, purposes, retention periods and users' rights.",
+    "legalNoticeTitle": "Legal notice",
+    "legalNoticeBody": "Page to be completed with the publisher's legal information (company name, registered office, registration, publication director, hosting)."
+  },
   "Metadata": {
     "siteName": "ALIN — African Legal Innovation Network",
     "homeTitle": "ALIN — African Legal Innovation Network",
