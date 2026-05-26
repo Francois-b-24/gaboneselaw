@@ -81,8 +81,7 @@ export function ContactForm() {
       {status === "error" && errorMessage && (
         <p
           role="alert"
-          className="border-l-2 pl-4 text-sm text-ink"
-          style={{ borderColor: "#b91c1c" }}
+          className="border-l-2 border-danger pl-4 text-sm text-ink"
         >
           {errorMessage}
         </p>

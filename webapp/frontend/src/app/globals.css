@@ -24,6 +24,9 @@
   --color-terra-light: #d8b04a;
   --color-savanna: #d8b04a;
 
+  /* État d'erreur (formulaire de contact) */
+  --color-danger: #b3261e;
+
   --font-serif: var(--font-serif);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
