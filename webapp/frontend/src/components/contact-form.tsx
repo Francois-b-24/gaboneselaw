@@ -141,12 +141,15 @@ export function ContactForm() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="border-b border-ink pb-1 text-base transition-colors hover:border-terra hover:text-terra"
-      >
-        {t("submit")} →
-      </button>
+      <div className="space-y-3">
+        <button
+          type="submit"
+          className="border-b border-ink pb-1 text-base transition-colors hover:border-terra hover:text-terra"
+        >
+          {t("submit")} →
+        </button>
+        <p className="text-sm text-muted">{t("requiredNote")}</p>
+      </div>
     </form>
   );
 }

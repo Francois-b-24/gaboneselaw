@@ -117,7 +117,8 @@
     "email": "Your email address",
     "subject": "Subject (optional)",
     "message": "Your message",
-    "submit": "Open my mail client"
+    "submit": "Open my mail client",
+    "requiredNote": "Your mail client will only open once your name, email and message are filled in."
   },
   "Resources": {
     "eyebrow": "Educational resources",

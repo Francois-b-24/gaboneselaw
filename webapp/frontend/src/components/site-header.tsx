@@ -9,8 +9,8 @@ const NAV_ITEMS = [
   { href: "/", key: "home" },
   { href: "/manifeste", key: "manifesto" },
   { href: "/blog", key: "blog" },
-  { href: "/contacts", key: "contacts" },
   { href: "/a-propos", key: "about" },
+  { href: "/contacts", key: "contacts" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
