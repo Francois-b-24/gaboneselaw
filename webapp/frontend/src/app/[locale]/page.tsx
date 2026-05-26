@@ -31,7 +31,7 @@ function HomeContent({ locale }: { locale: string }) {
       {/* Hero manifeste */}
       <section className="mx-auto flex min-h-[85vh] max-w-7xl flex-col justify-center px-6 pt-20">
         <Eyebrow>{t("heroEyebrow")}</Eyebrow>
-        <h1 className="font-serif text-6xl leading-[0.95] tracking-tight md:text-8xl lg:text-[9rem]">
+        <h1 className="font-serif text-4xl leading-[1.05] tracking-tight md:text-6xl lg:text-8xl">
           {t("heroTitle")}
           <em className="accent-italic mt-2 block">{t("heroAccent")}</em>
         </h1>
