@@ -1,22 +1,28 @@
 @import "tailwindcss";
 
 /*
- * Palette ALIN — famille visuelle LexGabon (ivoire/encre) + accent terra ALIN.
+ * Palette ALIN — alignée sur LexGabon (navy/ivoire + accent or), avec une variation
+ * volontaire ±5–10 % pour qu'ALIN garde sa personnalité (or plus ambré, navy plus neutre).
+ * L'accent or (#b78a2b) reprend la couleur du favicon (src/app/icon.svg) : le site est
+ * désormais cohérent avec son logo.
  * Tailwind v4 : les tokens @theme génèrent les utilitaires (bg-paper, text-terra, ...).
+ *
+ * NB : les utilitaires gardent le préfixe `terra*` (≈10 fichiers les utilisent), mais
+ * leur VALEUR est désormais l'or ALIN. Renommage cosmétique terra→gold hors scope.
  */
 @theme {
-  /* Partagé avec LexGabon */
-  --color-ink: #0a0a0a;
-  --color-paper: #faf8f3;
-  --color-paper-warm: #f2efe7;
-  --color-muted: #6b6b6b;
-  --color-border-soft: #e5e0d5;
+  /* Famille LexGabon : ivoire papier + encre bleu-nuit */
+  --color-ink: #101f33;
+  --color-paper: #f6f2ea;
+  --color-paper-warm: #ece6d8;
+  --color-muted: #46566e;
+  --color-border-soft: #ddd3bf;
 
-  /* Spécifique ALIN (identité distincte) */
-  --color-terra: #9c4a2e;
-  --color-terra-deep: #6b3220;
-  --color-terra-light: #c97052;
-  --color-savanna: #c9a77a;
+  /* Accent or ALIN (= or du logo, légèrement plus ambré que l'or LexGabon #c49a2a) */
+  --color-terra: #b78a2b;
+  --color-terra-deep: #8a6510;
+  --color-terra-light: #d8b04a;
+  --color-savanna: #d8b04a;
 
   --font-serif: var(--font-serif);
   --font-sans: var(--font-geist-sans);
