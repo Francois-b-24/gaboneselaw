@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", key: "home" },
-  { href: "/a-propos", key: "about" },
   { href: "/manifeste", key: "manifesto" },
   { href: "/blog", key: "blog" },
   { href: "/contacts", key: "contacts" },
+  { href: "/a-propos", key: "about" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
