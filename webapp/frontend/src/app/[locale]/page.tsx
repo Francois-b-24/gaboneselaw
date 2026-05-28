@@ -7,6 +7,7 @@ import { FeatureCard } from "@/components/ui/feature-card";
 import { SectionTitle } from "@/components/ui/section-title";
 import { StatBlock } from "@/components/ui/stat-block";
 import { getLocalizedArticles } from "@/data/blog-articles";
+import { getLexGabonStats, type LexGabonStats } from "@/lib/lexgabon-stats";
 
 const LEXGABON_URL = "https://www.lexgabon.com";
 
@@ -17,10 +18,11 @@ export default async function Home({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <HomeContent locale={locale} />;
+  const stats = await getLexGabonStats();
+  return <HomeContent locale={locale} stats={stats} />;
 }
 
-function HomeContent({ locale }: { locale: string }) {
+function HomeContent({ locale, stats }: { locale: string; stats: LexGabonStats }) {
   const t = useTranslations("Home");
   const articles = getLocalizedArticles(locale);
   const [featured, ...rest] = articles;
@@ -99,11 +101,11 @@ function HomeContent({ locale }: { locale: string }) {
 
             <div className="mb-8 flex flex-wrap gap-x-12 gap-y-4 border-b border-border-soft pb-8">
               <div>
-                <p className="font-serif text-3xl">2500+</p>
+                <p className="font-serif text-3xl">{stats.indexedArticlesCount.toLocaleString(locale)}</p>
                 <p className="eyebrow mt-1">{t("statTextsIndexed")}</p>
               </div>
               <div>
-                <p className="font-serif text-3xl">5</p>
+                <p className="font-serif text-3xl">{stats.officialSourcesCount}</p>
                 <p className="eyebrow mt-1">{t("statSources")}</p>
               </div>
               <div>
@@ -147,7 +149,7 @@ function HomeContent({ locale }: { locale: string }) {
 
         <div className="mt-20 grid grid-cols-2 gap-12 md:grid-cols-4">
           <StatBlock value="5+" label={t("figCountries")} />
-          <StatBlock value="2500+" label={t("figTexts")} />
+          <StatBlock value={stats.indexedArticlesCount.toLocaleString(locale)} label={t("figTexts")} />
           <StatBlock value={t("figAccessValue")} label={t("figAccess")} />
           <StatBlock value="2026" label={t("figYear")} />
         </div>
